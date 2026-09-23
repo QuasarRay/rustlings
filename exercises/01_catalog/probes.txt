@@ -1,5 +1,5 @@
 RUSTLINGS_WORKSHOP_V1
-src/app_state.rs	1877
+src/app_state.rs	5814
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -35,7 +35,83 @@ fn pending_search_returns_global_indices_and_wraps() {
 
 }
 
-src/cmd.rs	897
+#[cfg(test)]
+mod workshop_progress_contracts {
+    use super::*;
+    #[test]
+    fn reset_restores_source_and_reverses_completion() {
+        let (_cwd, mut app) = crate::workshop_test_support::app();
+        app.official_exercises = true;
+        for name in ["alpha", "beta"] {
+            std::fs::write(format!("exercises/{name}.rs"), "changed").unwrap();
+        }
+        app.set_status(0, true).unwrap();
+        app.set_status(1, true).unwrap();
+        app.reset_current_exercise().unwrap();
+        assert_eq!(app.n_done(), 1);
+        assert_ne!(std::fs::read_to_string("exercises/alpha.rs").unwrap(), "changed");
+        assert_eq!(app.reset_exercise_by_ind(1).unwrap(), "beta");
+        assert_eq!(app.n_done(), 0);
+        assert_ne!(std::fs::read_to_string("exercises/beta.rs").unwrap(), "changed");
+        assert!(app.reset_exercise_by_ind(3).is_err());
+    }
+    #[test]
+    fn checking_and_final_recheck_persist_actual_results() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok"), crate::workshop_test_support::info("probe_compile")], "Custom finish".into(), None, false).unwrap();
+        let mut stdout = std::io::stdout().lock();
+        assert_eq!(app.check_all_exercises(&mut stdout).unwrap(), Some(1));
+        assert_eq!(app.n_done(), 1);
+        assert!(matches!(app.done_current_exercise::<false>(&mut stdout).unwrap(), ExercisesProgress::NewPending));
+        assert_eq!(app.current_exercise_ind(), 1);
+        assert!(matches!(app.done_current_exercise::<false>(&mut stdout).unwrap(), ExercisesProgress::NewPending));
+        assert_eq!(app.n_done(), 1, "a failing final recheck must revoke completion");
+        std::fs::write("exercises/probe_compile.rs", "fn main() {}\n").unwrap();
+        assert!(matches!(app.done_current_exercise::<false>(&mut stdout).unwrap(), ExercisesProgress::AllDone));
+        assert_eq!(app.n_pending(), 0);
+        let saved = std::fs::read_to_string(STATE_FILE_NAME).unwrap();
+        assert!(saved.lines().any(|line| line == "probe_compile"));
+    }
+    #[test]
+    fn app_editor_ownership_is_restored_after_join() {
+        let (_cwd, mut app) = crate::workshop_test_support::app();
+        let handle = app.open_editor().unwrap();
+        app.join_editor_handle(handle).unwrap();
+        app.close_editor().unwrap();
+        app.editor = Some(crate::editor::Editor::new(Some("rustc --version".into()), false).unwrap().unwrap());
+        let handle = app.open_editor().unwrap();
+        assert!(app.editor.is_none());
+        app.join_editor_handle(handle).unwrap();
+        assert!(app.editor.is_some());
+        app.close_editor().unwrap();
+    }
+}
+#[cfg(test)]
+mod workshop_release_contracts {
+    use super::*;
+    #[test]
+    fn solution_visibility_respects_debug_community_and_embedded_modes() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok")], String::new(), None, false).unwrap();
+        assert!(app.current_solution_path().unwrap().is_none());
+        std::fs::create_dir("solutions").unwrap();
+        std::fs::write("solutions/probe_ok.rs", "fn main() {}\n").unwrap();
+        let path = app.current_solution_path().unwrap();
+        if cfg!(debug_assertions) {
+            assert!(path.is_none());
+        } else {
+            assert_eq!(path.as_deref(), Some("solutions/probe_ok.rs"));
+            drop(app);
+            std::fs::remove_file("info.toml").unwrap();
+            let info: crate::info_file::InfoFile = toml::from_str(EMBEDDED_FILES.info_file).unwrap();
+            let (app, _) = AppState::new(info.exercises, String::new(), None, false).unwrap();
+            let path = app.current_solution_path().unwrap().expect("embedded solution must be revealed");
+            assert!(std::fs::metadata(path).unwrap().len() > 0);
+        }
+    }
+}
+
+src/cmd.rs	1515
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -59,6 +135,21 @@ fn subprocess_nonzero_is_failure_with_or_without_capture() {
     }
 }
 
+}
+
+#[cfg(test)]
+mod workshop_binary_contracts {
+    use super::*;
+    #[test]
+    fn metadata_locates_the_built_binary_and_missing_binary_is_an_error() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let runner = CmdRunner::build().unwrap();
+        let mut output = Vec::new();
+        assert!(runner.target_dir.is_absolute());
+        assert!(runner.cargo("build", "probe_ok", Some(&mut output)).run("fixture build").unwrap());
+        assert!(runner.run_debug_bin("probe_ok", ".", Some(&mut output)).unwrap());
+        assert!(runner.run_debug_bin("absent_binary", ".", None).is_err());
+    }
 }
 
 src/dev.rs	470
@@ -179,7 +270,7 @@ fn pane_ids_are_decimal_not_hexadecimal() {
 
 }
 
-src/embedded.rs	872
+src/embedded.rs	2073
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -203,7 +294,31 @@ fn chapter_readme_and_restored_source_keep_original_paths() {
 
 }
 
-src/exercise.rs	935
+#[cfg(test)]
+mod workshop_materialization_contracts {
+    use super::*;
+    use crate::exercise::RunnableExercise;
+    #[test]
+    fn initialization_and_reveal_materialize_the_embedded_bytes() {
+        let _cwd = crate::workshop_test_support::cwd(false);
+        let info: crate::info_file::InfoFile = toml::from_str(EMBEDDED_FILES.info_file).unwrap();
+        EMBEDDED_FILES.init_exercises_dir(&info.exercises).unwrap();
+        for (i, exercise) in info.exercises.iter().enumerate() {
+            let files = &EMBEDDED_FILES.exercise_files[i];
+            assert_eq!(fs::read(exercise.path()).unwrap(), files.exercise);
+            for input in files.input_files {
+                let path = std::path::PathBuf::from(exercise.path());
+                assert_eq!(fs::read_to_string(path.parent().unwrap().join(input.name)).unwrap(), input.content);
+            }
+        }
+        assert!(EMBEDDED_FILES.init_exercises_dir(&info.exercises).is_err());
+        let path = EMBEDDED_FILES.write_solution_to_disk(0, info.exercises[0].name).unwrap();
+        assert_eq!(path, info.exercises[0].sol_path());
+        assert_eq!(fs::read(&path).unwrap(), EMBEDDED_FILES.exercise_files[0].solution);
+    }
+}
+
+src/exercise.rs	1299
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -222,6 +337,18 @@ fn actual_checker_rejects_compile_test_and_runtime_failures() {
     let mut output=Vec::new();assert!(sample("probe_ok",true).run_solution(Some(&mut output),&runner).unwrap(),"{}",String::from_utf8_lossy(&output));
 }
 
+}
+
+#[cfg(test)]
+mod workshop_path_contracts {
+    use super::*;
+    #[test]
+    fn solution_paths_preserve_optional_chapter() {
+        let mut info = crate::workshop_test_support::info("quest");
+        assert_eq!(info.sol_path(), "solutions/quest.rs");
+        info.dir = Some("chapter");
+        assert_eq!(info.sol_path(), "solutions/chapter/quest.rs");
+    }
 }
 
 src/info_file.rs	1222

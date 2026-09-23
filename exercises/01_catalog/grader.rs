@@ -200,6 +200,7 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
     if let Some(home) = std::env::var_os("CARGO_HOME")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
+        .or_else(|| std::env::var_os("USERPROFILE").map(|p| PathBuf::from(p).join(".cargo")))
     {
         directories.push(home.parent().unwrap_or(&home).to_path_buf());
         for name in ["config", "config.toml"] {
@@ -401,7 +402,11 @@ impl Workshop {
         }
     }
     fn evaluate(&self, files: &Files, _long: bool) -> Result<(bool, String)> {
-        let input = serialize(files, &self.identity);
+        self.evaluate_filtered(files, None)
+    }
+    fn evaluate_filtered(&self, files: &Files, filter: Option<&str>) -> Result<(bool, String)> {
+        let identity = format!("{}\nfilter={filter:?}", self.identity);
+        let input = serialize(files, &identity);
         let key = digest(&input);
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
@@ -432,7 +437,12 @@ impl Workshop {
         let target = self.cache.join("engine-target");
         let mut report = String::new();
         let mut passed = true;
-        let commands: &[&[&str]] = &[
+        let mut test_args = vec!["test", "--locked", "--workspace"];
+        if let Some(filter) = filter {
+            test_args.push(filter);
+        }
+        test_args.extend(["--", "--test-threads=1"]);
+        let mut commands: Vec<&[&str]> = vec![
             &[
                 "clippy",
                 "--locked",
@@ -442,11 +452,25 @@ impl Workshop {
                 "-D",
                 "warnings",
             ],
-            &["test", "--locked", "--workspace", "--", "--test-threads=1"],
+            &test_args,
         ];
+        // This upstream branch is deliberately disabled in debug builds.
+        // Check its release behavior as well; ordinary debug tests cannot do so.
+        if filter.is_none() || filter == Some("app_state::") {
+            commands.push(&[
+                "test",
+                "--locked",
+                "--release",
+                "--bin",
+                "rustlings",
+                "workshop_release_contracts",
+                "--",
+                "--test-threads=1",
+            ]);
+        }
         for args in commands {
             let mut cmd = Command::new("cargo");
-            cmd.args(*args)
+            cmd.args(args)
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
                 .env("CARGO_TERM_COLOR", "never");
@@ -562,6 +586,96 @@ impl Workshop {
         println!("{summary}");
         Ok(())
     }
+    fn mutations(&self, first: usize, last: usize) -> Result<()> {
+        let baseline: Vec<_> = self.missions.iter().map(|m| self.original(m)).collect();
+        let (pass, report) = self.evaluate(&self.base, true)?;
+        if !pass {
+            return fail(format!(
+                "Reference failed before mutation testing:\n{report}"
+            ));
+        }
+        let mut escaped = Vec::new();
+        let mut evidence = String::from("id\tmission\tevidence\n");
+        for m in self
+            .missions
+            .iter()
+            .filter(|m| m.id >= first && m.id <= last)
+        {
+            let mut repairs = baseline.clone();
+            let original = &baseline[m.id - 1];
+            // These mutants compile without todo! or unimplemented!: they remove
+            // a function's runtime behavior. Value/branch assertions in probes
+            // supplement this minimum check that the function is exercised.
+            repairs[m.id - 1] = if original.contains("const fn") {
+                let mut mutant = original.clone();
+                let value = mutant.rfind("true").ok_or("missing boolean literal")?;
+                mutant.replace_range(value..value + 4, "false");
+                mutant
+            } else {
+                let opening = original.find('{').ok_or("missing function body")? + 1;
+                let mut mutant = original.clone();
+                mutant.insert_str(
+                    opening,
+                    &format!(
+                        "\nif std::hint::black_box(true) {{ panic!(\"WORKSHOP_MUTATION_{}\"); }}\n",
+                        m.id
+                    ),
+                );
+                mutant
+            };
+            let module = m
+                .file
+                .strip_prefix("src/")
+                .unwrap_or_default()
+                .trim_end_matches(".rs")
+                .replace('/', "::")
+                + "::";
+            let filter = if self.probes.contains_key(&m.file) && m.file != "src/main.rs" {
+                Some(module.as_str())
+            } else {
+                None
+            };
+            let files = self.assembled(&repairs)?;
+            let (mut pass, mut report) = self.evaluate_filtered(&files, filter)?;
+            // A function may be covered by integration tests or another module.
+            // The filter is an optimization, never evidence that coverage is absent.
+            if pass && filter.is_some() {
+                (pass, report) = self.evaluate(&files, true)?;
+            }
+            let behavioral = report.contains("cargo test --locked")
+                || (m.file == "rustlings-macros/src/lib.rs"
+                    && report.contains("WORKSHOP_MUTATION_"));
+            let status = if pass {
+                "ESCAPED"
+            } else if !behavioral {
+                "INVALID_MUTANT"
+            } else {
+                "CAUGHT"
+            };
+            if status != "CAUGHT" {
+                escaped.push(format!("{} {}: {status}", m.id, m.name));
+            }
+            evidence.push_str(&format!("{}\t{}\t{}\n", m.id, m.name, status));
+            fs::write(
+                self.cache.join(format!("mutation-{:03}.log", m.id)),
+                &report,
+            )?;
+            println!(
+                "mutation {:03}/{}: {status} — {}",
+                m.id,
+                self.missions.len(),
+                m.name
+            );
+        }
+        fs::write(self.cache.join("mutation-audit.tsv"), evidence)?;
+        if !escaped.is_empty() {
+            return fail(format!(
+                "Behavioral evidence is incomplete:\n{}",
+                escaped.join("\n")
+            ));
+        }
+        Ok(())
+    }
     fn export(&self, dest: &Path, role: &str) -> Result<()> {
         if dest.exists() {
             return fail("export destination must not exist");
@@ -608,6 +722,13 @@ fn run() -> Result<()> {
             Ok(())
         }
         "audit" => workshop.audit(),
+        "mutations" => workshop.mutations(
+            args.get(3).map(|s| s.parse()).transpose()?.unwrap_or(1),
+            args.get(4)
+                .map(|s| s.parse())
+                .transpose()?
+                .unwrap_or(workshop.missions.len()),
+        ),
         "check" => {
             let id = args.get(3).ok_or("missing mission")?.parse()?;
             let role = args.get(4).ok_or("missing role")?;
