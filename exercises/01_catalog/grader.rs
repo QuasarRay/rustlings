@@ -36,6 +36,22 @@ fn outcome<T>(code: u8, message: impl Into<String>) -> Result<T> {
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Files = BTreeMap<String, String>;
+const BUILD_ID_ENV: &str = "WORKSHOP_COMPILED_INPUT";
+fn build_identity_probe(label: &str) -> String {
+    format!(
+        r#"
+// Cargo tracks this environment dependency even when source timestamps repeat.
+const _: Option<&str> = option_env!("WORKSHOP_COMPILED_INPUT");
+#[cfg(test)]
+#[test]
+fn workshop_build_identity() {{
+    let runtime = std::env::var("WORKSHOP_COMPILED_INPUT").ok();
+    assert_eq!(option_env!("WORKSHOP_COMPILED_INPUT"), runtime.as_deref(), "WORKSHOP_STALE_ARTIFACT");
+    println!("WORKSHOP_BUILD_ID:{label}:{{}}", runtime.as_deref().unwrap_or("manual"));
+}}
+"#
+    )
+}
 const BEGIN: &str = "// BEGIN RUSTLINGS REPAIR\n";
 const END: &str = "\n// END RUSTLINGS REPAIR";
 #[derive(Clone)]
@@ -397,7 +413,9 @@ impl Workshop {
         };
         match status {
             "PASS" => Ok(Some((true, output.into()))),
-            "FAIL" => Ok(Some((false, output.into()))),
+            // A tool/filesystem failure can surface as a failed Cargo test.
+            // Retrying must recover without changing a learner's source.
+            "FAIL" => Ok(None),
             _ => Ok(None),
         }
     }
@@ -418,6 +436,15 @@ impl Workshop {
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
+        // Force a fresh crate rebuild on an uncached attempt, including retries
+        // after infrastructure failure; dependency artifacts remain reusable.
+        let build_id = format!(
+            "{key}:{}:{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_nanos()
+        );
         let build = self.cache.join("engine");
         reconcile(&build, files)?;
         for (path, text) in files {
@@ -431,6 +458,9 @@ impl Workshop {
             if let Some(probes) = self.probes.get(path) {
                 text.push_str("\n");
                 text.push_str(probes);
+            }
+            if path == "src/main.rs" || path == "rustlings-macros/src/lib.rs" {
+                text.push_str(&build_identity_probe(path));
             }
             write_changed(&build.join(path), text.as_bytes())?;
         }
@@ -451,6 +481,15 @@ impl Workshop {
                 "--",
                 "-D",
                 "warnings",
+            ],
+            &[
+                "test",
+                "--locked",
+                "--workspace",
+                "workshop_build_identity",
+                "--",
+                "--test-threads=1",
+                "--nocapture",
             ],
             &test_args,
         ];
@@ -473,6 +512,7 @@ impl Workshop {
             cmd.args(args)
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
+                .env(BUILD_ID_ENV, &build_id)
                 .env("CARGO_TERM_COLOR", "never");
             if std::env::var_os("CARGO_BUILD_JOBS").is_none() {
                 cmd.env("CARGO_BUILD_JOBS", "2");
@@ -490,7 +530,40 @@ impl Workshop {
             })?;
             report.push_str(&format!("cargo {}\n", args.join(" ")));
             report.push_str(&String::from_utf8_lossy(&output));
+            if args.contains(&"workshop_build_identity") {
+                let output = String::from_utf8_lossy(&output);
+                if !status.success()
+                    || ["src/main.rs", "rustlings-macros/src/lib.rs"]
+                        .iter()
+                        .any(|path| {
+                            !output.contains(&format!("WORKSHOP_BUILD_ID:{path}:{build_id}"))
+                        })
+                {
+                    return outcome(
+                        2,
+                        format!(
+                            "INFRA_ERROR: compiled artifacts do not match the reconstructed input; no grading result was cached.\n{report}"
+                        ),
+                    );
+                }
+            }
             if !status.success() {
+                if [
+                    "Permission denied (os error 13)",
+                    "kind: PermissionDenied",
+                    "Text file busy (os error 26)",
+                    "No space left on device (os error 28)",
+                ]
+                .iter()
+                .any(|diagnostic| report.contains(diagnostic))
+                {
+                    return outcome(
+                        2,
+                        format!(
+                            "INFRA_ERROR: a process or filesystem resource prevented evaluation. No rejection was cached; retry after resolving the resource error.\n{report}"
+                        ),
+                    );
+                }
                 passed = false;
                 break;
             }
@@ -498,11 +571,10 @@ impl Workshop {
         let dir = self.cache.join("results");
         fs::create_dir_all(&dir)?;
         // The full input is checked as well as its hash; hash collisions cannot grant a pass.
-        fs::write(dir.join(format!("{key}.input")), input)?;
-        fs::write(
-            dir.join(format!("{key}.report")),
-            format!("{}\n{report}", if passed { "PASS" } else { "FAIL" }),
-        )?;
+        if passed {
+            fs::write(dir.join(format!("{key}.input")), input)?;
+            fs::write(dir.join(format!("{key}.report")), format!("PASS\n{report}"))?;
+        }
         Ok((passed, report))
     }
     fn check(&self, id: usize, role: &str, source: &str) -> Result<()> {
@@ -870,6 +942,83 @@ mod verifier_tests {
         let after = environment_identity(&tmp.0).unwrap();
         assert_ne!(before, after);
         assert_eq!(after, environment_identity(&tmp.0).unwrap());
+    }
+    #[test]
+    fn a_persisted_tool_failure_does_not_block_retrying_unchanged_source() {
+        let tmp = Scratch::new();
+        let workshop = Workshop {
+            root: tmp.0.clone(),
+            cache: tmp.0.clone(),
+            base: Files::new(),
+            probes: Files::new(),
+            missions: Vec::new(),
+            identity: String::new(),
+        };
+        let input = b"unchanged learner source";
+        let key = digest(input);
+        let results = tmp.0.join("results");
+        write_changed(&results.join(format!("{key}.input")), input).unwrap();
+        write_changed(
+            &results.join(format!("{key}.report")),
+            b"FAIL\nPermission denied (os error 13)",
+        )
+        .unwrap();
+        assert!(workshop.cached(&key, input).unwrap().is_none());
+        write_changed(
+            &results.join(format!("{key}.report")),
+            b"PASS\nverified after tool recovery",
+        )
+        .unwrap();
+        assert!(workshop.cached(&key, input).unwrap().unwrap().0);
+        assert!(
+            workshop
+                .cached(&key, b"different source")
+                .unwrap()
+                .is_none()
+        );
+    }
+    #[test]
+    fn cargo_rebuilds_changed_content_even_when_source_mtime_is_preserved() {
+        let tmp = Scratch::new();
+        write_changed(
+            &tmp.0.join("Cargo.toml"),
+            b"[package]\nname='workshop_freshness'\nversion='0.0.0'\nedition='2024'\n[workspace]\n",
+        )
+        .unwrap();
+        let source = tmp.0.join("src/lib.rs");
+        let mut timestamp = None;
+        for (identity, value) in [("first", "one"), ("second", "two")] {
+            let content = format!(
+                "#[test] fn changed_value() {{ assert_eq!(\"{value}\", std::env::var(\"EXPECTED_VALUE\").unwrap()); }}\n{}",
+                build_identity_probe("fixture")
+            );
+            write_changed(&source, content.as_bytes()).unwrap();
+            if let Some(time) = timestamp {
+                File::options()
+                    .write(true)
+                    .open(&source)
+                    .unwrap()
+                    .set_times(fs::FileTimes::new().set_modified(time))
+                    .unwrap();
+            } else {
+                timestamp = Some(fs::metadata(&source).unwrap().modified().unwrap());
+            }
+            let (status, output) = process::capture(
+                Command::new("cargo")
+                    .args(["test", "--offline", "--", "--nocapture"])
+                    .current_dir(&tmp.0)
+                    .env("CARGO_TARGET_DIR", tmp.0.join("target"))
+                    .env(BUILD_ID_ENV, identity)
+                    .env("EXPECTED_VALUE", value),
+                Duration::from_secs(60),
+            )
+            .unwrap();
+            assert!(status.success(), "{}", String::from_utf8_lossy(&output));
+            assert!(
+                String::from_utf8_lossy(&output)
+                    .contains(&format!("WORKSHOP_BUILD_ID:fixture:{identity}"))
+            );
+        }
     }
     #[cfg(unix)]
     #[test]
