@@ -7,6 +7,34 @@ use std::{path::Path, process::Command, sync::Mutex, time::Duration};
 mod process;
 static COMMAND: Mutex<()> = Mutex::new(());
 
+pub fn entry() -> Result<Option<std::process::ExitCode>> {
+    if std::env::args().nth(1).as_deref() != Some("workshop") {
+        return Ok(None);
+    }
+    anyhow::ensure!(enabled(), "Run workshop commands from the course root");
+    std::fs::create_dir_all("target/workshop")?;
+    let binary = format!("target/workshop/course{}", std::env::consts::EXE_SUFFIX);
+    let mut compile = Command::new("rustc");
+    compile.args([
+        "--edition=2024",
+        "exercises/01_catalog/course.rs",
+        "-o",
+        &binary,
+    ]);
+    let (status, output) = process::capture(&mut compile, Duration::from_secs(120))?;
+    anyhow::ensure!(
+        status.success(),
+        "Course driver compilation failed: {}",
+        String::from_utf8_lossy(&output)
+    );
+    let mut cmd = Command::new(binary);
+    cmd.args(std::env::args().skip(2));
+    let status = cmd.status().context("Could not launch course driver")?;
+    Ok(Some(std::process::ExitCode::from(
+        status.code().unwrap_or(2) as u8,
+    )))
+}
+
 pub fn enabled() -> bool {
     Path::new("exercises/01_catalog/missions.tsv").is_file()
         && Path::new("exercises/01_catalog/upstream.txt").is_file()

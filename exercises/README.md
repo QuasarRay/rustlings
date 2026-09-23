@@ -13,7 +13,7 @@ Requirements: Rust 1.89 or newer, Cargo, Clippy, and rustfmt. The original engin
 From a checkout of **this fork**:
 
 ```sh
-cargo run --manifest-path dev/Cargo.toml --bin catalog_paths -- --prepare
+cargo run --locked -- workshop prepare
 cargo run -- --no-editor
 ```
 
@@ -24,11 +24,15 @@ For the normal installed-course experience, build this fork with `cargo build --
 ```sh
 /absolute/path/to/fork/target/release/rustlings init
 cd rustlings
-cargo run --bin catalog_paths -- --prepare
+/absolute/path/to/fork/target/release/rustlings workshop prepare
 /absolute/path/to/fork/target/release/rustlings --no-editor
 ```
 
 Use the binary built from this fork. Installing the upstream crate from crates.io gives the original beginner exercises.
+
+The portable maintenance entry point is `rustlings workshop`: `doctor` checks prerequisites, `info` identifies the fork, `prepare` checks the reference, `audit` runs the complete author gate, and `smoke` checks distribution and export. In this checkout, prefix these commands with `cargo run --locked --` instead of `rustlings`. The Rust driver is also directly compilable without Bash.
+
+The package's existing `rust-version = "1.88"` describes the host engine. `[package.metadata.workshop].rust-version = "1.89"` describes this course's runtime verifier. The course preflight, CI, and release path enforce the latter; the archived original engine retains its own declared minimum. `rustlings --version` is the engine version; use `rustlings workshop info` to identify this course.
 
 ## Mission rules
 

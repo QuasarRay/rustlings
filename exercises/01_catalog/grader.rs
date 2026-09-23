@@ -615,6 +615,12 @@ fn run() -> Result<()> {
             std::io::stdin().read_to_string(&mut source)?;
             workshop.check(id, role, &source)
         }
+        "check-file" => {
+            let id = args.get(3).ok_or("missing mission")?.parse()?;
+            let role = args.get(4).ok_or("missing role")?;
+            let source = fs::read_to_string(args.get(5).ok_or("missing source path")?)?;
+            workshop.check(id, role, &source)
+        }
         "export" => workshop.export(
             Path::new(args.get(3).ok_or("missing destination")?),
             args.get(4).map(String::as_str).unwrap_or("exercises"),
