@@ -47,6 +47,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: swatinem/rust-cache@v2
+      - name: Verify every workshop defect and warm checker artifacts
+        run: bash exercises/01_catalog/audit.sh
       - name: rustlings dev check
         run: cargo dev check --require-solutions
   rumdl:

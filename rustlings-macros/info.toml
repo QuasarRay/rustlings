@@ -1,1229 +1,799 @@
 format_version = 1
-
 welcome_message = """
-Is this your first time? Don't worry, Rustlings is made for beginners!
-We are going to teach you a lot of things about Rust, but before we can
-get started, here are some notes about how Rustlings operates:
-
-1. The central concept behind Rustlings is that you solve exercises. These
-   exercises usually contain some compiler or logic errors which cause the
-   exercise to fail compilation or testing. It's your job to find all errors
-   and fix them!
-2. Make sure to have your editor open in the `rustlings/` directory. Rustlings
-   will show you the path of the current exercise under the progress bar. Open
-   the exercise file in your editor, fix errors and save the file. Rustlings
-   will automatically detect the file change and rerun the exercise. If all
-   errors are fixed, Rustlings will ask you to move on to the next exercise.
-3. If you're stuck on an exercise, enter `h` to show a hint.
-4. If an exercise doesn't make sense to you, feel free to open an issue on
-   GitHub! (https://github.com/rust-lang/rustlings). We look at every issue, and
-   sometimes, other learners do too so you can help each other out!"""
-
+REBUILD THE CHECKER
+You have finished Rustlings. Now restore the Rustlings engine itself.
+Read exercises/README.md first and complete the one-time preparation.
+Every mission has a contract, a real source repair, and three levels of hints.
+Your earlier repairs remain in later builds. Use n to advance, l for the map,
+h for a hint, r to retry, and x to reset. Resetting can relock later missions.
+"""
 final_message = """
-We hope you enjoyed learning about the various aspects of Rust!
-If you noticed any issues, don't hesitate to report them on GitHub.
-You can also contribute your own exercises to help the greater community!
-
-Before reporting an issue or contributing, please read our guidelines:
-https://github.com/rust-lang/rustlings/blob/main/CONTRIBUTING.md"""
-
-# INTRO
-
-[[exercises]]
-name = "intro1"
-dir = "00_intro"
-test = false
-skip_check_unsolved = true
-hint = """
-Enter `n` to move on to the next exercise.
-You might need to press ENTER after typing `n`."""
-
-[[exercises]]
-name = "intro2"
-dir = "00_intro"
-test = false
-hint = """
-The compiler is informing us that we've got the name of the print macro wrong.
-It also suggests an alternative."""
-
-# VARIABLES
-
-[[exercises]]
-name = "variables1"
-dir = "01_variables"
-test = false
-hint = """
-The declaration in the `main` function is missing a keyword that is needed
-in Rust to create a new variable binding."""
-
-[[exercises]]
-name = "variables2"
-dir = "01_variables"
-test = false
-hint = """
-The compiler message is saying that Rust can't infer the type that the
-variable binding `x` has with what is given here.
-
-What happens if you annotate the first line in the `main` function with a type
-annotation?
-
-What if you give `x` a value?
-
-What if you do both?
-
-What type should `x` be, anyway?
-
-What if `x` is the same type as `10`? What if it's a different type?"""
-
-[[exercises]]
-name = "variables3"
-dir = "01_variables"
-test = false
-hint = """
-In this exercise, we have a variable binding that we've created in the `main`
-function, and we're trying to use it in the next line, but we haven't given it
-a value.
-
-We can't print out something that isn't there; try giving `x` a value!
-
-This is an error that can cause bugs that's very easy to make in any
-programming language -- thankfully the Rust compiler has caught this for us!"""
-
-[[exercises]]
-name = "variables4"
-dir = "01_variables"
-test = false
-hint = """
-In Rust, variable bindings are immutable by default. But here, we're trying
-to reassign a different value to `x`! There's a keyword we can use to make
-a variable binding mutable instead."""
-
-[[exercises]]
-name = "variables5"
-dir = "01_variables"
-test = false
-hint = """
-In `variables4` we already learned how to make an immutable variable mutable
-using a special keyword. Unfortunately this doesn't help us much in this
-exercise because we want to assign a different typed value to an existing
-variable. Sometimes you may also like to reuse existing variable names because
-you are just converting values to different types like in this exercise.
-
-Fortunately Rust has a powerful solution to this problem: 'Shadowing'!
-You can read more about 'Shadowing' in the book's section 'Variables and
-Mutability':
-https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#shadowing
-
-Try to solve this exercise afterwards using this technique."""
-
-[[exercises]]
-name = "variables6"
-dir = "01_variables"
-test = false
-hint = """
-We know about variables and mutability, but there is another important type of
-variable available: constants.
-
-Constants are always immutable. They are declared with the keyword `const`
-instead of `let`.
-
-The type of Constants must always be annotated.
-
-Read more about constants and the differences between variables and constants
-under 'Constants' in the book's section 'Variables and Mutability':
-https://doc.rust-lang.org/book/ch03-01-variables-and-mutability.html#constants"""
-
-# FUNCTIONS
-
-[[exercises]]
-name = "functions1"
-dir = "02_functions"
-test = false
-hint = """
-This `main` function is calling a function that it expects to exist, but the
-function doesn't exist. It expects this function to have the name `call_me`.
-It also expects this function to not take any arguments and not return a value.
-Sounds a lot like `main`, doesn't it?"""
-
-[[exercises]]
-name = "functions2"
-dir = "02_functions"
-test = false
-hint = """
-Rust requires that all parts of a function's signature have type annotations,
-but `call_me` is missing the type annotation of `num`."""
-
-[[exercises]]
-name = "functions3"
-dir = "02_functions"
-test = false
-hint = """
-This time, the function *declaration* is okay, but there's something wrong
-with the place where we are calling the function."""
-
-[[exercises]]
-name = "functions4"
-dir = "02_functions"
-test = false
-hint = """
-The error message points to the function `sale_price` and says it expects a type
-after `->`. This is where the function's return type should be.
-Take a look at the `is_even` function for an example!"""
-
-[[exercises]]
-name = "functions5"
-dir = "02_functions"
-test = false
-hint = """
-This is a really common error that can be fixed by removing one character.
-It happens because Rust distinguishes between expressions and statements:
-Expressions return a value based on their operand(s), and statements simply
-return a `()` type which behaves just like `void` in C/C++.
-
-We want to return a value with the type `i32` from the `square` function, but
-it is returning the type `()`.
-
-There are two solutions:
-1. Add the `return` keyword before `num * num;`
-2. Remove the semicolon `;` after `num * num`"""
-
-# IF
-
-[[exercises]]
-name = "if1"
-dir = "03_if"
-hint = """
-It's possible to do this in one line if you would like!
-
-Some similar examples from other languages:
-- In C(++) this would be: `a > b ? a : b`
-- In Python this would be:  `a if a > b else b`
-
-Remember in Rust that:
-- The `if` condition does not need to be surrounded by parentheses
-- `if`/`else` conditionals are expressions
-- Each condition is followed by a `{}` block"""
-
-[[exercises]]
-name = "if2"
-dir = "03_if"
-hint = """
-For that first compiler error, it's important in Rust that each conditional
-block returns the same type!
-
-To get the tests passing, you will need a couple conditions checking different
-input values. Read the tests to find out what they expect."""
-
-[[exercises]]
-name = "if3"
-dir = "03_if"
-hint = """
-In Rust, every arm of an `if` expression has to return the same type of value.
-Make sure the type is consistent across all arms."""
-
-# QUIZ 1
-
-[[exercises]]
-name = "quiz1"
-dir = "quizzes"
-hint = "No hints this time ;)"
-
-# PRIMITIVE TYPES
-
-[[exercises]]
-name = "primitive_types1"
-dir = "04_primitive_types"
-test = false
-hint = """
-In Rust, a boolean can be negated using the operator `!` before it.
-Example: `!true == false`
-This also works with boolean variables."""
-
-[[exercises]]
-name = "primitive_types2"
-dir = "04_primitive_types"
-test = false
-hint = "No hints this time ;)"
-
-[[exercises]]
-name = "primitive_types3"
-dir = "04_primitive_types"
-test = false
-hint = """
-There's a shorthand to initialize arrays with a certain size that doesn't
-require you to type in 100 items (but you certainly can if you want!).
-
-For example, you can do:
-```
-let array = ["Are we there yet?"; 100];
-```
-
-Bonus: what are some other things you could have that would return `true`
-for `a.len() >= 100`?"""
-
-[[exercises]]
-name = "primitive_types4"
-dir = "04_primitive_types"
-hint = """
-Take a look at the 'Understanding Ownership -> The Slice Type -> Other Slices'
-section of the book: https://doc.rust-lang.org/book/ch04-03-slices.html and use
-the starting and ending (plus one) indices of the items in the array that you
-want to end up in the slice.
-
-If you're curious why the first argument of `assert_eq!` does not have an
-ampersand for a reference since the second argument is a reference, take a look
-at the coercion chapter of the nomicon:
-https://doc.rust-lang.org/nomicon/coercions.html"""
-
-[[exercises]]
-name = "primitive_types5"
-dir = "04_primitive_types"
-test = false
-hint = """
-Take a look at the 'Data Types -> The Tuple Type' section of the book:
-https://doc.rust-lang.org/book/ch03-02-data-types.html#the-tuple-type
-Particularly the part about destructuring (second to last example in the
-section).
-
-You'll need to make a pattern to bind `name` and `age` to the appropriate parts
-of the tuple."""
-
-[[exercises]]
-name = "primitive_types6"
-dir = "04_primitive_types"
-hint = """
-While you could use a destructuring `let` for the tuple here, try
-indexing into it instead, as explained in the last example of the
-'Data Types -> The Tuple Type' section of the book:
-https://doc.rust-lang.org/book/ch03-02-data-types.html#the-tuple-type
-Now, you have another tool in your toolbox!"""
-
-# VECS
-
-[[exercises]]
-name = "vecs1"
-dir = "05_vecs"
-hint = """
-In Rust, there are two basic ways to define a Vector.
-1. One way is to use the `Vec::new()` function to create a new vector
-   and fill it with the `push()` method.
-2. The second way is to use the `vec![]` macro and define your elements
-   inside the square brackets. This way is simpler when you exactly know
-   the initial values.
-
-Check this chapter: https://doc.rust-lang.org/book/ch08-01-vectors.html
-of the Rust book to learn more."""
-
-[[exercises]]
-name = "vecs2"
-dir = "05_vecs"
-hint = """
-Use the `.push()` method on the vector to push new elements to it."""
-
-# MOVE SEMANTICS
-
-[[exercises]]
-name = "move_semantics1"
-dir = "06_move_semantics"
-hint = """
-So you've got the "cannot borrow `vec` as mutable, as it is not declared as
-mutable" error on the line where we push an element to the vector, right?
-
-The fix for this is going to be adding one keyword, and the addition is NOT on
-the line where we push to the vector (where the error is).
-
-Try accessing `vec0` after having called `fill_vec()`. See what happens!"""
-
-[[exercises]]
-name = "move_semantics2"
-dir = "06_move_semantics"
-hint = """
-When running this exercise for the first time, you'll notice an error about
-"borrow of moved value". In Rust, when an argument is passed to a function and
-it's not explicitly returned, you can't use the original variable anymore.
-We call this "moving" a variable. When we pass `vec0` into `fill_vec`, it's
-being "moved" into `vec1`, meaning we can't access `vec0` anymore.
-
-You could make another, separate version of the data that's in `vec0` and
-pass it to `fill_vec` instead. This is called cloning in Rust."""
-
-[[exercises]]
-name = "move_semantics3"
-dir = "06_move_semantics"
-hint = """
-The difference between this one and the previous ones is that the first line
-of `fn fill_vec` that had `let mut vec = vec;` is no longer there. You can,
-instead of adding that line back, add `mut` in one place that will change
-an existing binding to be a mutable binding instead of an immutable one :)"""
-
-[[exercises]]
-name = "move_semantics4"
-dir = "06_move_semantics"
-hint = """
-Carefully reason about the range in which each mutable reference is in
-scope. Does it help to update the value of `x` immediately after
-the mutable reference is taken?
-Read more about 'Mutable References' in the book's section 'References and
-Borrowing':
-https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html#mutable-references."""
-
-[[exercises]]
-name = "move_semantics5"
-dir = "06_move_semantics"
-test = false
-hint = """
-To find the answer, you can consult the book section "References and Borrowing":
-https://doc.rust-lang.org/book/ch04-02-references-and-borrowing.html
-
-The first problem is that `get_char` is taking ownership of the string. So
-`data` is moved and can't be used for `string_uppercase`. `data` is moved to
-`get_char` first, meaning that `string_uppercase` can't manipulate the data.
-
-Once you've fixed that, `string_uppercase`'s function signature will also need
-to be adjusted."""
-
-# STRUCTS
-
-[[exercises]]
-name = "structs1"
-dir = "07_structs"
-hint = """
-Rust has more than one type of struct. Three actually, all variants are used to
-package related data together.
-
-There are regular structs. These are named collections of related data stored in
-fields.
-
-Tuple structs are basically just named tuples.
-
-Finally, unit structs. These don't have any fields and are useful for generics.
-
-In this exercise, you need to complete and implement one of each kind.
-Read more about structs in The Book:
-https://doc.rust-lang.org/book/ch05-01-defining-structs.html"""
-
-[[exercises]]
-name = "structs2"
-dir = "07_structs"
-hint = """
-Creating instances of structs is easy, all you need to do is assign some values
-to its fields.
-
-There are however some shortcuts that can be taken when instantiating structs.
-Have a look in The Book to find out more:
-https://doc.rust-lang.org/book/ch05-01-defining-structs.html#creating-instances-from-other-instances-with-struct-update-syntax"""
-
-[[exercises]]
-name = "structs3"
-dir = "07_structs"
-hint = """
-Methods and associated functions are both declared in an `impl MyType {}`
-block. Methods have a `self`, `&self` or `&mut self` parameter, where `self`
-implicitly has the type of the impl block. Associated functions do not have
-a `self` parameter.
-
-Have a look in The Book to find out more about method implementations:
-https://doc.rust-lang.org/book/ch05-03-method-syntax.html"""
-
-# ENUMS
-
-[[exercises]]
-name = "enums1"
-dir = "08_enums"
-test = false
-hint = "No hints this time ;)"
-
-[[exercises]]
-name = "enums2"
-dir = "08_enums"
-test = false
-hint = """
-Enum variants can be defined using three different forms: struct-, tuple- and
-unit-like. Here's an example enum definition, which uses all three forms:
-
-enum EnumUsingAllVariantForms {
-    StructLike { named_field: bool },
-    TupleLike(bool),
-    UnitLike,
-}"""
-
-[[exercises]]
-name = "enums3"
-dir = "08_enums"
-hint = """
-As a first step, define enums to compile the code without errors.
-
-Then, create a match expression in `process()`.
-
-Note that you need to deconstruct some message variants in the match expression
-to get the variant's values."""
-
-# STRINGS
-
-[[exercises]]
-name = "strings1"
-dir = "09_strings"
-test = false
-hint = """
-The `current_favorite_color` function is currently returning a string slice
-with the `'static` lifetime. We know this because the data of the string lives
-in our code itself -- it doesn't come from a file or user input or another
-program -- so it will live as long as our program lives.
-
-But it is still a string slice. There's one way to create a `String` by
-converting a string slice covered in the Strings chapter of the book, and
-another way that uses the `From` trait."""
-
-[[exercises]]
-name = "strings2"
-dir = "09_strings"
-test = false
-hint = """
-Yes, it would be really easy to fix this by just changing the value bound to
-`word` to be a string slice instead of a `String`, wouldn't it? There is a way
-to add one character to the `if` statement, though, that will coerce the
-`String` into a string slice.
-
-Side note: If you're interested in learning about how this kind of reference
-conversion works, you can jump ahead in the book and read this part in the
-smart pointers chapter:
-https://doc.rust-lang.org/book/ch15-02-deref.html#implicit-deref-coercions-with-functions-and-methods"""
-
-[[exercises]]
-name = "strings3"
-dir = "09_strings"
-hint = """
-There are many useful standard library functions for strings. Let's try and use
-some of them:
-https://doc.rust-lang.org/std/string/struct.String.html#method.trim
-
-For the `compose_me` method: You can either use the `format!` macro, or convert
-the string slice into an owned string, which you can then freely extend.
-
-For the `replace_me` method, you can check out the `replace` method:
-https://doc.rust-lang.org/std/string/struct.String.html#method.replace"""
-
-[[exercises]]
-name = "strings4"
-dir = "09_strings"
-test = false
-hint = """
-Replace `placeholder` with either `string` or `string_slice` in the `main`
-function.
-
-Example:
-`placeholder("blue");`
-should become
-`string_slice("blue");`
-because "blue" is `&str`, not `String`."""
-
-# MODULES
-
-[[exercises]]
-name = "modules1"
-dir = "10_modules"
-test = false
-hint = """
-Everything is private in Rust by default. But there's a keyword we can use
-to make something public!"""
-
-[[exercises]]
-name = "modules2"
-dir = "10_modules"
-test = false
-hint = """
-The `delicious_snacks` module is trying to present an external interface that
-is different than its internal structure (the `fruits` and `veggies` modules
-and associated constants). Complete the `use` statements to fit the uses in
-`main` and find the one keyword missing for both constants.
-
-Learn more in The Book:
-https://doc.rust-lang.org/book/ch07-04-bringing-paths-into-scope-with-the-use-keyword.html#re-exporting-names-with-pub-use"""
-
-[[exercises]]
-name = "modules3"
-dir = "10_modules"
-test = false
-hint = """
-`UNIX_EPOCH` and `SystemTime` are declared in the `std::time` module. Add a
-`use` statement for these two to bring them into scope. You can use nested
-paths to bring these two in using only one line."""
-
-# HASHMAPS
-
-[[exercises]]
-name = "hashmaps1"
-dir = "11_hashmaps"
-hint = """
-The number of fruits should be at least 5 and you have to put at least 3
-different types of fruits."""
-
-[[exercises]]
-name = "hashmaps2"
-dir = "11_hashmaps"
-hint = """
-Use the `entry()` and `or_insert()` methods of `HashMap` to achieve this.
-
-Learn more in The Book:
-https://doc.rust-lang.org/book/ch08-03-hash-maps.html#only-inserting-a-value-if-the-key-has-no-value"""
-
-[[exercises]]
-name = "hashmaps3"
-dir = "11_hashmaps"
-hint = """
-Hint 1: Use the `entry()` and `or_default()` methods of `HashMap` to insert the
-        default value of `TeamScores` if a team doesn't exist in the table yet.
-
-Hint 2: If there is already an entry for a given key, the value returned by
-        `entry()` can be updated based on the existing value.
-
-Learn more in The Book:
-https://doc.rust-lang.org/book/ch08-03-hash-maps.html#updating-a-value-based-on-the-old-value"""
-
-# QUIZ 2
-
-[[exercises]]
-name = "quiz2"
-dir = "quizzes"
-hint = "The `+` operator can concatenate a `String` with a `&str`."
-
-# OPTIONS
-
-[[exercises]]
-name = "options1"
-dir = "12_options"
-hint = """
-Options can have a `Some` value, with an inner value, or a `None` value,
-without an inner value.
-
-There are multiple ways to get at the inner value, you can use `unwrap`, or
-pattern match. Unwrapping is the easiest, but how do you do it safely so that
-it doesn't panic in your face later?"""
-
-[[exercises]]
-name = "options2"
-dir = "12_options"
-hint = """
-Check out:
-
-- https://doc.rust-lang.org/rust-by-example/flow_control/if_let.html
-- https://doc.rust-lang.org/rust-by-example/flow_control/while_let.html
-
-Remember that `Option`s can be nested in if-let and while-let statements.
-
-For example: `if let Some(Some(x)) = y`
-
-Also see `Option::flatten`"""
-
-[[exercises]]
-name = "options3"
-dir = "12_options"
-test = false
-hint = """
-The compiler says a partial move happened in the `match` statement. How can
-this be avoided? The compiler shows the correction needed.
-
-After making the correction as suggested by the compiler, read the related docs
-page:
-https://doc.rust-lang.org/std/keyword.ref.html"""
-
-# ERROR HANDLING
-
-[[exercises]]
-name = "errors1"
-dir = "13_error_handling"
-hint = """
-`Ok` and `Err` are the two variants of `Result`, so what the tests are saying
-is that `generate_nametag_text` should return a `Result` instead of an `Option`.
-
-To make this change, you'll need to:
-  - update the return type in the function signature to be a `Result<String,
-    String>` that could be the variants `Ok(String)` and `Err(String)`
-  - change the body of the function to return `Ok(…)` where it currently
-    returns `Some(…)`
-  - change the body of the function to return `Err(error message)` where it
-    currently returns `None`"""
-
-[[exercises]]
-name = "errors2"
-dir = "13_error_handling"
-hint = """
-One way to handle this is using a `match` statement on
-`item_quantity.parse::<i32>()` where the cases are `Ok(something)` and
-`Err(something)`.
-
-This pattern is very common in Rust, though, so there's the `?` operator that
-does pretty much what you would make that match statement do for you!
-
-Take a look at this section of the "Error Handling" chapter:
-https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#a-shortcut-for-propagating-errors-the--operator"""
-
-[[exercises]]
-name = "errors3"
-dir = "13_error_handling"
-test = false
-hint = """
-If other functions can return a `Result`, why shouldn't `main`? It's a fairly
-common convention to return something like `Result<(), ErrorType>` from your
-`main` function.
-
-The unit type `()` is there because nothing is really needed in terms of a
-positive result."""
-
-[[exercises]]
-name = "errors4"
-dir = "13_error_handling"
-hint = """
-`PositiveNonzeroInteger::new` is always creating a new instance and returning
-an `Ok` result. But it should be doing some checking, returning an `Err` if
-those checks fail, and only returning an `Ok` if those checks determine that
-everything is… okay :)"""
-
-[[exercises]]
-name = "errors5"
-dir = "13_error_handling"
-test = false
-hint = """
-There are two different possible `Result` types produced within the `main`
-function, which are propagated using the `?` operators. How do we declare a
-return type for the `main` function that allows both?
-
-Under the hood, the `?` operator calls `From::from` on the error value to
-convert it to a boxed trait object, a `Box<dyn Error>`. This boxed trait object
-is polymorphic, and since all errors implement the `Error` trait, we can capture
-lots of different errors in one `Box` object.
-
-Check out this section of The Book:
-https://doc.rust-lang.org/book/ch09-02-recoverable-errors-with-result.html#a-shortcut-for-propagating-errors-the--operator
-
-Read more about boxing errors:
-https://doc.rust-lang.org/stable/rust-by-example/error/multiple_error_types/boxing_errors.html
-
-Read more about using the `?` operator with boxed errors:
-https://doc.rust-lang.org/stable/rust-by-example/error/multiple_error_types/reenter_question_mark.html"""
-
-[[exercises]]
-name = "errors6"
-dir = "13_error_handling"
-hint = """
-This exercise uses a completed version of `PositiveNonzeroInteger` from the
-previous exercises.
-
-Below the line that `TODO` asks you to change, there is an example of using
-the `map_err()` method on a `Result` to transform one type of error into
-another. Try using something similar on the `Result` from `parse()`. You
-can then use the `?` operator to return early.
-
-Read more about `map_err()` in the `std::result` documentation:
-https://doc.rust-lang.org/std/result/enum.Result.html#method.map_err"""
-
-# Generics
-
-[[exercises]]
-name = "generics1"
-dir = "14_generics"
-test = false
-hint = """
-Vectors in Rust make use of generics to create dynamically sized arrays of any
-type.
-If the vector `numbers` has the type `Vec<T>`, then we can only push values of
-type `T` to it. By using `into()` before pushing, we ask the compiler to convert
-`n1` and `n2` to `T`. But the compiler doesn't know what `T` is yet and needs a
-type annotation.
-
-`u8` and `i8` can both be converted to `i16`, `i32` and `i64`. Choose one for
-the generic of the vector."""
-
-[[exercises]]
-name = "generics2"
-dir = "14_generics"
-hint = """
-Related section in The Book:
-https://doc.rust-lang.org/book/ch10-01-syntax.html#in-method-definitions"""
-
-# TRAITS
-
-[[exercises]]
-name = "traits1"
-dir = "15_traits"
-hint = """
-More about traits in The Book:
-https://doc.rust-lang.org/book/ch10-02-traits.html
-
-The `+` operator can concatenate a `String` with a `&str`."""
-
-[[exercises]]
-name = "traits2"
-dir = "15_traits"
-hint = """
-Notice how the trait takes ownership of `self` and returns `Self`.
-
-Although the signature of `append_bar` in the trait takes `self` as argument,
-the implementation can take `mut self` instead. This is possible because the
-value is owned anyway."""
-
-[[exercises]]
-name = "traits3"
-dir = "15_traits"
-hint = """
-Traits can have a default implementation for functions. Data types that
-implement the trait can then use the default version of these functions
-if they choose not to implement the function themselves.
-
-Related section in The Book:
-https://doc.rust-lang.org/book/ch10-02-traits.html#default-implementations"""
-
-[[exercises]]
-name = "traits4"
-dir = "15_traits"
-hint = """
-Instead of using concrete types as parameters you can use traits. Try replacing
-`???` with `impl [what goes here?]`.
-
-Related section in The Book:
-https://doc.rust-lang.org/book/ch10-02-traits.html#traits-as-parameters"""
-
-[[exercises]]
-name = "traits5"
-dir = "15_traits"
-hint = """
-To ensure a parameter implements multiple traits use the '+ syntax'. Try
-replacing `???` with 'impl [what goes here?] + [what goes here?]'.
-
-Related section in The Book:
-https://doc.rust-lang.org/book/ch10-02-traits.html#specifying-multiple-trait-bounds-with-the--syntax"""
-
-# QUIZ 3
-
-[[exercises]]
-name = "quiz3"
-dir = "quizzes"
-hint = """
-To find the best solution to this challenge, you need to recall your knowledge
-of traits, specifically "Trait Bound Syntax":
-https://doc.rust-lang.org/book/ch10-02-traits.html#trait-bound-syntax
-
-Here is how to specify a trait bound for an implementation block:
-`impl<T: Trait1 + Trait2 + …> for Foo<T> { … }`
-
-You may need this:
-`use std::fmt::Display;`"""
-
-# LIFETIMES
-
-[[exercises]]
-name = "lifetimes1"
-dir = "16_lifetimes"
-hint = """
-Let the compiler guide you. Also take a look at The Book if you need help:
-https://doc.rust-lang.org/book/ch10-03-lifetime-syntax.html"""
-
-[[exercises]]
-name = "lifetimes2"
-dir = "16_lifetimes"
-test = false
-hint = """
-Remember that the generic lifetime `'a` will get the concrete lifetime that is
-equal to the smaller of the lifetimes of `x` and `y`.
-
-You can take at least two paths to achieve the desired result while keeping the
-inner block:
-1. Move the `string2` declaration to make it live as long as `string1` (how is
-   `result` declared?)
-2. Move `println!` into the inner block"""
-
-[[exercises]]
-name = "lifetimes3"
-dir = "16_lifetimes"
-test = false
-hint = """Let the compiler guide you :)"""
-
-# TESTS
-
-[[exercises]]
-name = "tests1"
-dir = "17_tests"
-hint = """
-`assert!` is a macro that needs an argument. Depending on the value of the
-argument, `assert!` will do nothing (in which case the test will pass) or
-`assert!` will panic (in which case the test will fail).
-
-So try giving different values to `assert!` and see which ones compile, which
-ones pass, and which ones fail :)
-
-If you want to check for `false`, you can negate the result of what you're
-checking using `!`, like `assert!(!…)`."""
-
-[[exercises]]
-name = "tests2"
-dir = "17_tests"
-hint = """
-`assert_eq!` is a macro that takes two arguments and compares them. Try giving
-it two values that are equal! Try giving it two arguments that are different!
-Try switching which argument comes first and which comes second!"""
-
-[[exercises]]
-name = "tests3"
-dir = "17_tests"
-hint = """
-We expect the method `Rectangle::new` to panic for negative values.
-
-To handle that, you need to add a special attribute to the test function.
-
-You can refer to the docs:
-https://doc.rust-lang.org/book/ch11-01-writing-tests.html#checking-for-panics-with-should_panic"""
-
-# STANDARD LIBRARY TYPES
-
-[[exercises]]
-name = "iterators1"
-dir = "18_iterators"
-hint = """
-An iterator goes through all elements in a collection, but what if we've run
-out of elements? What should we expect here? If you're stuck, take a look at
-https://doc.rust-lang.org/std/iter/trait.Iterator.html"""
-
-[[exercises]]
-name = "iterators2"
-dir = "18_iterators"
-hint = """
-`capitalize_first`:
-
-The variable `first` is a `char`. It needs to be capitalized and added to the
-remaining characters in `chars` in order to return the correct `String`.
-
-The remaining characters in `chars` can be viewed as a string slice using the
-`as_str` method.
-
-The documentation for `char` contains many useful methods.
-https://doc.rust-lang.org/std/primitive.char.html
-
-Use `char::to_uppercase`. It returns an iterator that can be converted to a
-`String`.
-
-`capitalize_words_vector`:
-
-Create an iterator from the slice. Transform the iterated values by applying
-the `capitalize_first` function. Remember to `collect` the iterator.
-
-`capitalize_words_string`:
-
-This is surprisingly similar to the previous solution. `collect` is very
-powerful and very general. Rust just needs to know the desired type."""
-
-[[exercises]]
-name = "iterators3"
-dir = "18_iterators"
-hint = """
-The `divide` function needs to return the correct error when the divisor is 0 or
-when even division is not possible.
-
-The `division_results` variable needs to be collected into a collection type.
-
-The `result_with_list` function needs to return a single `Result` where the
-success case is a vector of integers and the failure case is a `DivisionError`.
-
-The `list_of_results` function needs to return a vector of results.
-
-See https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.collect for
-how the `FromIterator` trait is used in `collect()`. This trait is REALLY
-powerful! It can make the solution to this exercise much easier."""
-
-[[exercises]]
-name = "iterators4"
-dir = "18_iterators"
-hint = """
-In an imperative language, you might write a `for` loop that updates a mutable
-variable. Or, you might write code utilizing recursion and a match clause. In
-Rust, you can take another functional approach, computing the factorial
-elegantly with ranges and iterators.
-
-Check out the `fold` and `rfold` methods!"""
-
-[[exercises]]
-name = "iterators5"
-dir = "18_iterators"
-hint = """
-The documentation for the `std::iter::Iterator` trait contains numerous methods
-that would be helpful here.
-
-The `collection` variable in `count_collection_iterator` is a slice of
-`HashMap`s. It needs to be converted into an iterator in order to use the
-iterator methods.
-
-The `fold` method can be useful in the `count_collection_iterator` function.
-
-For a further challenge, consult the documentation for `Iterator` to find
-a different method that could make your code more compact than using `fold`."""
-
-# SMART POINTERS
-
-[[exercises]]
-name = "smart_pointers1"
-dir = "19_smart_pointers"
-hint = """
-The compiler's message should help: Since we cannot store the value of the
-actual type when working with recursive types, we need to store a reference
-(pointer) to its value.
-
-We should, therefore, place our `List` inside a `Box`. More details in The Book:
-https://doc.rust-lang.org/book/ch15-01-box.html#enabling-recursive-types-with-boxes
-
-Creating an empty list should be fairly straightforward (Hint: Read the tests).
-
-For a non-empty list, keep in mind that we want to use our `Cons` list builder.
-Although the current list is one of integers (`i32`), feel free to change the
-definition and try other types!"""
-
-[[exercises]]
-name = "smart_pointers2"
-dir = "19_smart_pointers"
-hint = """
-This is a straightforward exercise to use the `Rc<T>` type. Each `Planet` has
-ownership of the `Sun`, and uses `Rc::clone()` to increment the reference count
-of the `Sun`.
-
-After using `drop()` to move the `Planet`s out of scope individually, the
-reference count goes down.
-
-In the end, the `Sun` only has one reference again, to itself.
-
-See more at: https://doc.rust-lang.org/book/ch15-04-rc.html
-
-Unfortunately, Pluto is no longer considered a planet :("""
-
-[[exercises]]
-name = "smart_pointers3"
-dir = "19_smart_pointers"
-test = false
-hint = """
-Make `shared_numbers` be an `Arc` from the `numbers` vector. Then, in order
-to avoid creating a copy of `numbers`, you'll need to create `child_numbers`
-inside the loop but still in the main thread.
-
-`child_numbers` should be a clone of the `Arc` of the numbers instead of a
-thread-local copy of the numbers.
-
-This is a simple exercise if you understand the underlying concepts, but if this
-is too much of a struggle, consider reading through all of Chapter 16 in The
-Book:
-https://doc.rust-lang.org/book/ch16-00-concurrency.html"""
-
-[[exercises]]
-name = "smart_pointers4"
-dir = "19_smart_pointers"
-hint = """
-If `Cow` already owns the data, it doesn't need to clone it when `to_mut()` is
-called.
-
-Check out the documentation of the `Cow` type:
-https://doc.rust-lang.org/std/borrow/enum.Cow.html"""
-
-# THREADS
-
-[[exercises]]
-name = "threads1"
-dir = "20_threads"
-test = false
-hint = """
-`JoinHandle` is a struct that is returned from a spawned thread:
-https://doc.rust-lang.org/std/thread/fn.spawn.html
-
-A challenge with multi-threaded applications is that the main thread can
-finish before the spawned threads are done.
-https://doc.rust-lang.org/book/ch16-01-threads.html#waiting-for-all-threads-to-finish-using-join-handles
-
-Use the `JoinHandle`s to wait for each thread to finish and collect their
-results.
-
-https://doc.rust-lang.org/std/thread/struct.JoinHandle.html"""
-
-[[exercises]]
-name = "threads2"
-dir = "20_threads"
-test = false
-hint = """
-`Arc` is an Atomic Reference Counted pointer that allows safe, shared access
-to **immutable** data. But we want to *change* the number of `jobs_done` so
-we'll need to also use another type that will only allow one thread to mutate
-the data at a time. Take a look at this section of the book:
-https://doc.rust-lang.org/book/ch16-03-shared-state.html#atomic-reference-counting-with-arct
-
-Keep reading if you'd like more hints :)
-
-Do you now have an `Arc<Mutex<JobStatus>>` at the beginning of `main`? Like:
-```
-let status = Arc::new(Mutex::new(JobStatus { jobs_done: 0 }));
-```
-
-Similar to the code in the following example in The Book:
-https://doc.rust-lang.org/book/ch16-03-shared-state.html#sharing-a-mutext-between-multiple-threads"""
-
-[[exercises]]
-name = "threads3"
-dir = "20_threads"
-hint = """
-An alternate way to handle concurrency between threads is to use an `mpsc`
-(multiple producer, single consumer) channel to communicate.
-
-With both a sending end and a receiving end, it's possible to send values in
-one thread and receive them in another.
-
-Multiple producers are possible by using `clone()` to create a duplicate of the
-original sending end.
-
-Related section in The Book:
-https://doc.rust-lang.org/book/ch16-02-message-passing.html"""
-
-# MACROS
-
-[[exercises]]
-name = "macros1"
-dir = "21_macros"
-test = false
-hint = """
-When you call a macro, you need to add something special compared to a regular
-function call."""
-
-[[exercises]]
-name = "macros2"
-dir = "21_macros"
-test = false
-hint = """
-Macros don't quite play by the same rules as the rest of Rust, in terms of
-what's available where.
-
-Unlike other things in Rust, the order of "where you define a macro" versus
-"where you use it" actually matters."""
-
-[[exercises]]
-name = "macros3"
-dir = "21_macros"
-test = false
-hint = """
-In order to use a macro outside of its module, you need to do something
-special to the module to lift the macro out into its parent."""
-
-[[exercises]]
-name = "macros4"
-dir = "21_macros"
-test = false
-hint = """
-You only need to add a single character to make this compile.
-
-The way macros are written, it wants to see something between each "macro arm",
-so it can separate them.
-
-That's all the macro exercises we have in here, but it's barely even scratching
-the surface of what you can do with Rust's macros. For a more thorough
-introduction, you can have a read through 'The Little Book of Rust Macros':
-https://veykril.github.io/tlborm/"""
-
-#  CLIPPY
-
-[[exercises]]
-name = "clippy1"
-dir = "22_clippy"
-test = false
-strict_clippy = true
-hint = """
-Rust stores the highest precision version of some long or infinite precision
-mathematical constants in the Rust standard library:
-https://doc.rust-lang.org/stable/std/f32/consts/index.html
-
-We may be tempted to use our own approximations for certain mathematical
-constants, but clippy recognizes those imprecise mathematical constants as a
-source of potential error.
-
-See the suggestions of the Clippy warning in the compile output and use the
-appropriate replacement constant from `std::f32::consts`."""
-
-[[exercises]]
-name = "clippy2"
-dir = "22_clippy"
-test = false
-strict_clippy = true
-hint = """
-`for` loops over `Option` values are more clearly expressed as an `if-let`
-statement.
-
-Not required to solve this exercise, but if you are interested in when iterating
-over `Option` can be useful, read the following section in the documentation:
-https://doc.rust-lang.org/std/option/#iterating-over-option"""
-
-[[exercises]]
-name = "clippy3"
-dir = "22_clippy"
-test = false
-strict_clippy = true
-hint = "No hints this time!"
-
-# TYPE CONVERSIONS
-
-[[exercises]]
-name = "conversions1"
-dir = "23_conversions"
-hint = """
-Use the `as` operator to cast one of the operands in the last line of the
-`average` function into the expected return type."""
-
-[[exercises]]
-name = "conversions2"
-dir = "23_conversions"
-hint = """
-The formula for converting from Fahrenheit to Celsius is: C = (F - 32) / 1.8
-This can be derived from the first formula:
-
-             F = C * 1.8 + 32   // now subtract 32 on both sides
-        F - 32 = C * 1.8        // then divide by 1.8
-(F - 32) / 1.8 = C
+Checker restored. Your repairs now reconstruct the original Rustlings engine.
+Run the final export and self-host checks in exercises/README.md.
+Use the architecture record to explain how you would author another subject.
 """
 
 [[exercises]]
-name = "conversions3"
-dir = "23_conversions"
-hint = """
-The implementation of `FromStr` should return an `Ok` with a `Person` object,
-or an `Err` with an error if the string is not valid.
-
-Another hint: You can use the `map_err` method of `Result` with a function or a
-closure to wrap the error from `parse::<u8>`.
-
-Yet another hint: If you would like to propagate errors by using the `?`
-operator in your solution, you might want to look at
-https://doc.rust-lang.org/stable/rust-by-example/error/multiple_error_types/reenter_question_mark.html"""
+name = "catalog_paths"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+input_files = ["runner.rs", "grader.rs", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh"]
+hint = "1. Contract: Build an exercise path for both a root-level file and a directory. Preserve the exercises/ prefix and .rs suffix.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
 
 [[exercises]]
-name = "conversions4"
-dir = "23_conversions"
-hint = """
-Is there an implementation of `TryFrom` in the standard library that can both do
-the required integer conversion and check the range of the input?
-
-Challenge: Can you make the `TryFrom` implementations generic over many integer
-types?"""
+name = "catalog_defaults"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+hint = "1. Contract: Missing test metadata must enable tests. Missing strict_clippy metadata must remain false.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
 
 [[exercises]]
-name = "conversions5"
-dir = "23_conversions"
-hint = """
-Add `AsRef<str>` or `AsMut<u32>` as a trait bound to the functions."""
-
-# ASYNC
+name = "catalog_loading"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+hint = "1. Contract: Prefer a local community catalog. Fall back to the embedded catalog only for NotFound; reject malformed or empty local catalogs.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
 
 [[exercises]]
-name = "async1"
-dir = "24_async"
-test = false
-input_files = [
-  "scores_class_a.txt",
-  "scores_class_b.txt",
-  "scores_class_c.txt",
-]
-hint = """
-Asynchronous runtimes like tokio can only spawn tasks that are defined as async
-functions, not regular ones. Add the "async" keyword before the "fn" keyword of
-the functions "tim", "carl" and "nick".
+name = "solution_paths"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+hint = "1. Contract: Produce the matching solutions/ path without losing the optional directory or file extension.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
 
-An async task can wait for another one to complete by "awaiting" it. Add
-".await" after the three "task_name" variables in the "block_on" call."""
+[[exercises]]
+name = "manifest_boundaries"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+hint = "1. Contract: Locate only the contents of bin = [...]. Report missing delimiters; offsets are UTF-8 byte offsets.\n2. Read the surrounding implementation and its callers in src/cargo_toml.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "manifest_targets"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+hint = "1. Contract: Register each exercise and only solutions that exist. Respect path prefixes and preserve catalog order.\n2. Read the surrounding implementation and its callers in src/cargo_toml.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "manifest_update"
+dir = "01_catalog"
+test = true
+strict_clippy = true
+hint = "1. Contract: Replace the bin-list contents while preserving all manifest text before and after the list.\n2. Read the surrounding implementation and its callers in src/cargo_toml.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "cargo_metadata"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Ask Cargo for its target_directory, check process success, and parse the JSON response with useful error context.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "cargo_arguments"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Construct the Cargo subcommand with the requested binary and optional color. Preserve the debug development-manifest override.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "process_status"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Return the actual child exit status in both captured and discarded-output modes. Preserve merged output and the 30-second deadline.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "binary_location"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Run the compiled debug binary from Cargo target_directory, using the exercise directory as its working directory.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "command_tail"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Append the extra arguments in order and return the builder for chaining.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "runtime_failure"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Keep runtime failure visible in the collected output and return failure even when compilation succeeded.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "checker_pipeline"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore the build, optional tests, Clippy, and runtime sequence. Each failed gate must prevent a completion result.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "exercise_entry"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Delegate through the common pipeline with normal Clippy policy and the exercise name.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "solution_entry"
+dir = "02_checker"
+test = true
+strict_clippy = true
+hint = "1. Contract: Check the _sol binary through the same pipeline, forcing strict Clippy for reference solutions.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "idempotent_directory"
+dir = "03_distribution"
+test = true
+strict_clippy = true
+hint = "1. Contract: Accept an already existing directory; propagate other creation failures with the path in their context.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "chapter_readme"
+dir = "03_distribution"
+test = true
+strict_clippy = true
+hint = "1. Contract: Create a chapter directory and write its embedded README.md there.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "materialize_exercises"
+dir = "03_distribution"
+test = true
+strict_clippy = true
+hint = "1. Contract: Create the exercise tree, chapter READMEs, exercises, and input fixtures from the embedded catalog.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "restore_exercise"
+dir = "03_distribution"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore exactly one embedded exercise at a caller-validated index. Propagate filesystem write failures with context.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "reveal_solution"
+dir = "03_distribution"
+test = true
+strict_clippy = true
+hint = "1. Contract: Write the selected embedded solution under its chapter and name, and return that same path.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "initialize_workspace"
+dir = "03_distribution"
+test = true
+strict_clippy = true
+hint = "1. Contract: Complete one missing initialization stage. Preserve existing-directory checks, workspace detection, catalog materialization, and the generated manifest.\n2. Read the surrounding implementation and its callers in src/init.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "load_progress"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Reconstruct completed exercises by name from the saved state. Count each completed exercise once; tolerate an unreadable or incomplete state.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "pending_count"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Compute pending exercises from the cached completed count.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "persist_progress"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Write the current exercise and completed names using the existing file format. Rewind and truncate so an older longer save cannot leave stale names.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "select_index"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Reject indices at or beyond the catalog length, avoid redundant writes, and persist valid changes.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "select_name"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Resolve the first exact exercise name, report unknown names, and persist the selected index.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "completion_count"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Make repeated status updates idempotent. Completing increments the count; reopening decrements it.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "reopen_exercise"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Persist only when changing a completed exercise back to pending.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "reset_source"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore embedded official exercises; use the existing git-stash path for community exercises. Propagate command failures.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "reset_current"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Mark the selected exercise pending before restoring its source.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "reset_by_index"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Validate the index, persist pending status, restore the corresponding file, and return its name.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "next_pending"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Search after the current exercise first, then wrap to the beginning. Translate suffix-local positions back to catalog indices.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "solution_visibility"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Preserve debug-build behavior; materialize official solutions and only expose existing community solutions.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "parallel_check_all"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one stage of the parallel check-all coordinator. Keep the worker limit, result collection, status counts, and earliest pending result consistent.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "save_check_all"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Run the aggregate checker and persist its updated progress before returning.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "advance_progress"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Complete the current exercise, choose the next pending item, and run the final regression check before declaring the course finished.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "finish_message"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Render the configured completion message and progress through the original terminal output path.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "single_run_result"
+dir = "04_progress"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore the single-exercise command, including pending status on failure and advancing after successful validation.\n2. Read the surrounding implementation and its callers in src/run.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "terminal_budget"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Initialize a bounded terminal writer with zero consumed width and the requested maximum.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "ascii_width"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Write only ASCII bytes that fit the remaining terminal width and account for the bytes actually written.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "unicode_width"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Limit by Unicode scalar values rather than slicing inside a UTF-8 character. Update the same output-width budget.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "progress_counter"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Increment the completed check count and redraw the counter.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "progress_bar"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore a progress-bar stage while retaining the original width calculations and completed/pending formatting.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "canonical_paths"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Resolve a path to a Unicode canonical path; retain the existing Windows-prefix behavior and return None for failures.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "file_link_frame"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Style a file path using the caller-provided writer and restore terminal attributes afterward.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "file_hyperlink"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Emit the original terminal hyperlink sequence around the displayed file path.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "ansi_buffer"
+dir = "05_terminal"
+test = true
+strict_clippy = true
+hint = "1. Contract: Append an ANSI command to a byte buffer through the original formatting adapter.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_initial"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Initialize scroll state without subtracting below zero when the selected row is close to the start.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_window"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Keep the selection visible with padding, then clamp the viewport against the total row count.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_next"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Move one row forward when a selection exists and clamp at the final row.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_previous"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Move one row backward without underflow; an absent selection remains absent.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_resize"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Clear selection for an empty list and clamp a previous selection after rows are removed.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_padding"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Limit padding to one quarter of the visible rows and the configured maximum.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "scroll_viewport"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Update the viewport size, recompute padding, and then make the selected row visible.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_model"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Construct list state from application progress and the terminal dimensions, preserving row-index mappings.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_resize"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Update the rendering dimensions and the scroll viewport for the available rows.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_rows"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one stage of row rendering: selection, completion status, file names, and clipping must remain synchronized.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_render"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one stage of the existing list screen; retain search input, filters, help keys, and terminal-size handling.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_filter"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Rebuild visible exercise indices from the active completion filter and optional search filter.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_index_mapping"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Translate a visible selection through filtered row indices, and report missing/out-of-range selections.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_reset"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Reset the selected exercise and update the corresponding filtered row state.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_search"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Apply the original substring search to exercise names and synchronize the displayed rows and selection.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_open"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Resolve a selected visible row, make its exercise current, and indicate whether the list should exit.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_keys"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one input-handling branch while preserving filtering, navigation, search, reset, and quit behavior.\n2. Read the surrounding implementation and its callers in src/list.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "list_lifecycle"
+dir = "06_navigation"
+test = true
+strict_clippy = true
+hint = "1. Contract: Enter the original list terminal mode and restore it when handling finishes, including error paths.\n2. Read the surrounding implementation and its callers in src/list.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "input_pause"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Pause watcher-triggered work while an exercise is running; the existing Drop implementation resumes it.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "debounce_updates"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore the debouncer stage so bursts of file events produce one update per modified exercise per quiet interval.\n2. Read the surrounding implementation and its callers in src/watch/notify_event.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "file_notifications"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Ignore unrelated events and non-Rust files, then map changed Rust filenames to exercise indices.\n2. Read the surrounding implementation and its callers in src/watch/notify_event.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "terminal_events"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Translate terminal events to watch events while respecting pause/resume coordination and manual-run mode.\n2. Read the surrounding implementation and its callers in src/watch/terminal_event.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_model"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Create the watch state and terminal-event thread using the original channel types and initial pending status.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_run"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Run the selected exercise, record its output and done status, coordinate the editor, and render the result.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_reset"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore a reset-confirmation stage and resume the event thread when the interaction completes.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_change"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Only rerun for a change to the current exercise. Preserve the index comparison and output propagation.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_completion"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Both done variants permit advancing; Pending does not.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_advance"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Advance through AppState only when the current exercise is complete; otherwise report CurrentPending.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_prompt"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore a prompt stage so only currently valid actions are advertised.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_render"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one stage of the existing result screen: diagnostics, hints, solution link, progress, and current path.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_hint"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Reveal a hint once and redraw only when its visibility changes.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_check_all"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Run all checks while input is paused; select a newly pending exercise or display the final message.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_resize"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Redraw after an actual terminal-width change and avoid redundant redraws.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_dispatch"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one branch of the existing watch-event loop without changing event ownership or exit semantics.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_list_transition"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Switch between watch and list modes using their existing exit states.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "watch_start"
+dir = "07_watch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Construct the watcher and channels and enter the existing watch/list loop with its original terminal cleanup.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "editor_process"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Execute an editor command and preserve output/error context without silently accepting nonzero exit status.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "editor_discovery"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Use the existing version probe to detect a program; process spawning failures mean unavailable.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "editor_selection"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Choose the configured editor, VS Code, or Zellij according to the original precedence and argument parsing.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "editor_launch"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one launch stage, preserving asynchronous startup and the editor-specific exercise path arguments.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "editor_close"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Close managed Zellij panes while retaining the original behavior for ordinary command-based editors.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "editor_join"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Join an optional editor startup task and propagate its returned editor or error.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "pane_identifier"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Parse the existing terminal_<decimal-id> newline format and return both the original digits and their numeric value.\n2. Read the surrounding implementation and its callers in src/editor/zellij.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "pane_status"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Parse Zellij pane JSON and determine whether the requested pane ID is still present.\n2. Read the surrounding implementation and its callers in src/editor/zellij.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "pane_close"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Pass the pane ID as a separate argument to the original Zellij close-pane command.\n2. Read the surrounding implementation and its callers in src/editor/zellij.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "app_editor_start"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Coordinate the application current-exercise path with the optional editor startup task.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "app_editor_join"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Join the startup task and put the resulting editor back into AppState.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "app_editor_close"
+dir = "08_editors"
+test = true
+strict_clippy = true
+hint = "1. Contract: Close the optional editor and preserve the no-editor path.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_names"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Permit alphanumeric characters and underscores in exercise names. Report the first forbidden character.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_manifest"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Generate the expected binary registration and compare it against the manifest without modifying that manifest.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_catalog"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one validation stage for unique names, hints, paths, TODO guidance, and declared test presence.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_file_inventory"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Reject undeclared files and excessive directory nesting while allowing chapter READMEs and declared inputs.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_unsolved"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Run every non-exempt starter and reject an already solved exercise; propagate worker failures.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_format"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Validate the format version and combine metadata, directory, and unsolved-starter checks.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_solutions"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one solution-validation stage, preserving required-solution handling, strict Clippy, formatting, and unexpected-file checks.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_gate"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Enforce catalog-size and manifest constraints before validating starters and solutions.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_directories"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Create a relative project directory and attach its path to any failure.\n2. Read the surrounding implementation and its callers in src/dev/new.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_files"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Write generated project content to the named relative file and retain actionable error context.\n2. Read the surrounding implementation and its callers in src/dev/new.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_new_course"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore one community-course initialization stage, including the original optional Git behavior.\n2. Read the surrounding implementation and its callers in src/dev/new.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_update_manifest"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Regenerate only the bin list and preserve the rest of the existing manifest.\n2. Read the surrounding implementation and its callers in src/dev/update.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_update"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Update the proper manifest for official development or a community course without redesigning either workflow.\n2. Read the surrounding implementation and its callers in src/dev/update.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "author_dispatch"
+dir = "09_authoring"
+test = true
+strict_clippy = true
+hint = "1. Contract: Dispatch New, Check, and Update through their original handlers and preserve the debug-build restriction.\n2. Read the surrounding implementation and its callers in src/dev.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "embedded_macro"
+dir = "10_launch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore a stage of the real procedural macro: ordered exercises, solutions, directory indices, inputs, and READMEs must remain aligned.\n2. Read the surrounding implementation and its callers in rustlings-macros/src/lib.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+
+[[exercises]]
+name = "launch_dispatch"
+dir = "10_launch"
+test = true
+strict_clippy = true
+hint = "1. Contract: Restore the missing launch stage, preserving priority commands, initialization checks, normal CLI dispatch, and exit status. Then reconstruct and run the complete checker.\n2. Read the surrounding implementation and its callers in src/main.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
