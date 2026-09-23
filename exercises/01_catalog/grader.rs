@@ -413,7 +413,9 @@ impl Workshop {
         };
         match status {
             "PASS" => Ok(Some((true, output.into()))),
-            "FAIL" => Ok(Some((false, output.into()))),
+            // A tool/filesystem failure can surface as a failed Cargo test.
+            // Retrying must recover without changing a learner's source.
+            "FAIL" => Ok(None),
             _ => Ok(None),
         }
     }
@@ -546,6 +548,22 @@ impl Workshop {
                 }
             }
             if !status.success() {
+                if [
+                    "Permission denied (os error 13)",
+                    "kind: PermissionDenied",
+                    "Text file busy (os error 26)",
+                    "No space left on device (os error 28)",
+                ]
+                .iter()
+                .any(|diagnostic| report.contains(diagnostic))
+                {
+                    return outcome(
+                        2,
+                        format!(
+                            "INFRA_ERROR: a process or filesystem resource prevented evaluation. No rejection was cached; retry after resolving the resource error.\n{report}"
+                        ),
+                    );
+                }
                 passed = false;
                 break;
             }
@@ -553,11 +571,10 @@ impl Workshop {
         let dir = self.cache.join("results");
         fs::create_dir_all(&dir)?;
         // The full input is checked as well as its hash; hash collisions cannot grant a pass.
-        fs::write(dir.join(format!("{key}.input")), input)?;
-        fs::write(
-            dir.join(format!("{key}.report")),
-            format!("{}\n{report}", if passed { "PASS" } else { "FAIL" }),
-        )?;
+        if passed {
+            fs::write(dir.join(format!("{key}.input")), input)?;
+            fs::write(dir.join(format!("{key}.report")), format!("PASS\n{report}"))?;
+        }
         Ok((passed, report))
     }
     fn check(&self, id: usize, role: &str, source: &str) -> Result<()> {
@@ -925,6 +942,40 @@ mod verifier_tests {
         let after = environment_identity(&tmp.0).unwrap();
         assert_ne!(before, after);
         assert_eq!(after, environment_identity(&tmp.0).unwrap());
+    }
+    #[test]
+    fn a_persisted_tool_failure_does_not_block_retrying_unchanged_source() {
+        let tmp = Scratch::new();
+        let workshop = Workshop {
+            root: tmp.0.clone(),
+            cache: tmp.0.clone(),
+            base: Files::new(),
+            probes: Files::new(),
+            missions: Vec::new(),
+            identity: String::new(),
+        };
+        let input = b"unchanged learner source";
+        let key = digest(input);
+        let results = tmp.0.join("results");
+        write_changed(&results.join(format!("{key}.input")), input).unwrap();
+        write_changed(
+            &results.join(format!("{key}.report")),
+            b"FAIL\nPermission denied (os error 13)",
+        )
+        .unwrap();
+        assert!(workshop.cached(&key, input).unwrap().is_none());
+        write_changed(
+            &results.join(format!("{key}.report")),
+            b"PASS\nverified after tool recovery",
+        )
+        .unwrap();
+        assert!(workshop.cached(&key, input).unwrap().unwrap().0);
+        assert!(
+            workshop
+                .cached(&key, b"different source")
+                .unwrap()
+                .is_none()
+        );
     }
     #[test]
     fn cargo_rebuilds_changed_content_even_when_source_mtime_is_preserved() {
