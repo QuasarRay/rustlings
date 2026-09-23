@@ -106,6 +106,105 @@ fn serialize(files: &Files, identity: &str) -> Vec<u8> {
     }
     bytes
 }
+// A generated project must contain exactly the requested inputs. In particular,
+// a stale build.rs, Cargo configuration, or test must never participate in grading.
+fn reconcile(directory: &Path, files: &Files) -> Result<()> {
+    fn visit(root: &Path, dir: &Path, files: &Files) -> Result<()> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            let relative = path
+                .strip_prefix(root)?
+                .to_string_lossy()
+                .replace('\\', "/");
+            let kind = entry.file_type()?;
+            if kind.is_dir() {
+                if files.keys().any(|p| p.starts_with(&format!("{relative}/"))) {
+                    visit(root, &path, files)?;
+                } else {
+                    fs::remove_dir_all(path)?;
+                }
+            } else if kind.is_symlink() || !files.contains_key(&relative) {
+                fs::remove_file(path)?;
+            }
+        }
+        Ok(())
+    }
+    if fs::symlink_metadata(directory).is_ok_and(|m| m.file_type().is_symlink()) {
+        return fail("generated project directory must not be a symbolic link");
+    }
+    fs::create_dir_all(directory)?;
+    visit(directory, directory, files)
+}
+
+fn environment_identity(root: &Path) -> Result<Vec<u8>> {
+    let mut inputs = Files::new();
+    inputs.insert(
+        "platform".into(),
+        format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
+    );
+    for (key, value) in std::env::vars_os() {
+        let name = key.to_string_lossy();
+        if name.starts_with("RUST")
+            || name.starts_with("CARGO_")
+            || [
+                "PATH",
+                "CC",
+                "CXX",
+                "AR",
+                "LD",
+                "CFLAGS",
+                "CXXFLAGS",
+                "LDFLAGS",
+                "SDKROOT",
+                "MACOSX_DEPLOYMENT_TARGET",
+            ]
+            .contains(&name.as_ref())
+        {
+            // Cargo changes these labels for each adapter. They do not configure
+            // the restored project, and must not invalidate cumulative receipts.
+            if ["CARGO_BIN_NAME", "CARGO_MAKEFLAGS"].contains(&name.as_ref())
+                || name.starts_with("CARGO_PKG_")
+                || name.starts_with("CARGO_MANIFEST_")
+            {
+                continue;
+            }
+            inputs.insert(format!("env:{name}"), format!("{value:?}"));
+        }
+    }
+    let mut directories: Vec<_> = root
+        .join("target/workshop/engine")
+        .ancestors()
+        .map(Path::to_path_buf)
+        .collect();
+    if let Some(home) = std::env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
+    {
+        directories.push(home.parent().unwrap_or(&home).to_path_buf());
+        for name in ["config", "config.toml"] {
+            let path = home.join(name);
+            if path.is_file() {
+                inputs.insert(
+                    format!("config:{}", path.display()),
+                    fs::read_to_string(path)?,
+                );
+            }
+        }
+    }
+    for directory in directories {
+        for name in ["config", "config.toml"] {
+            let path = directory.join(".cargo").join(name);
+            if path.is_file() {
+                inputs.insert(
+                    format!("config:{}", path.display()),
+                    fs::read_to_string(path)?,
+                );
+            }
+        }
+    }
+    Ok(serialize(&inputs, "course-environment-v1"))
+}
 // OS-owned lock lifetime survives neither normal exit nor interruption.
 // Keeping the file itself is harmless: the lock belongs to this open handle.
 struct Lock {
@@ -158,8 +257,12 @@ impl Workshop {
         identity.extend_from_slice(&probes_raw);
         identity.extend_from_slice(map.as_bytes());
         identity.extend_from_slice(&fs::read(support.join("grader.rs"))?);
+        identity.extend_from_slice(&environment_identity(&root)?);
         for tool in ["rustc", "cargo"] {
-            let out = Command::new(tool).arg("--version").output()?;
+            let out = Command::new(tool)
+                .arg("--version")
+                .arg("--verbose")
+                .output()?;
             if !out.status.success() {
                 return fail(format!("{tool} is unavailable"));
             }
@@ -282,6 +385,7 @@ impl Workshop {
             return Ok(report);
         }
         let build = self.cache.join("engine");
+        reconcile(&build, files)?;
         for (path, text) in files {
             let mut text = text.clone();
             // The original excluded exercise packages assume there is no outer
@@ -520,5 +624,67 @@ fn main() -> std::process::ExitCode {
             eprintln!("{e}");
             std::process::ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod verifier_tests {
+    use super::*;
+    struct Scratch(PathBuf);
+    impl Scratch {
+        fn new() -> Self {
+            static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+            let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let p =
+                std::env::temp_dir().join(format!("rustlings-grader-{}-{n}", std::process::id()));
+            fs::create_dir(&p).unwrap();
+            Self(p)
+        }
+    }
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    #[test]
+    fn removes_untracked_build_inputs_and_preserves_expected_files() {
+        let tmp = Scratch::new();
+        write_changed(&tmp.0.join("src/main.rs"), b"expected").unwrap();
+        write_changed(&tmp.0.join("build.rs"), b"stale").unwrap();
+        write_changed(&tmp.0.join(".cargo/config.toml"), b"stale").unwrap();
+        write_changed(&tmp.0.join("src/old.rs"), b"stale").unwrap();
+        let files = Files::from([("src/main.rs".into(), "expected".into())]);
+        reconcile(&tmp.0, &files).unwrap();
+        assert_eq!(
+            fs::read_to_string(tmp.0.join("src/main.rs")).unwrap(),
+            "expected"
+        );
+        assert!(!tmp.0.join("build.rs").exists());
+        assert!(!tmp.0.join(".cargo").exists());
+        assert!(!tmp.0.join("src/old.rs").exists());
+    }
+    #[test]
+    fn cargo_config_changes_invalidate_the_environment_identity() {
+        let tmp = Scratch::new();
+        let before = environment_identity(&tmp.0).unwrap();
+        write_changed(
+            &tmp.0.join(".cargo/config.toml"),
+            b"[build]\nrustflags = ['--cfg', 'changed']\n",
+        )
+        .unwrap();
+        let after = environment_identity(&tmp.0).unwrap();
+        assert_ne!(before, after);
+        assert_eq!(after, environment_identity(&tmp.0).unwrap());
+    }
+    #[cfg(unix)]
+    #[test]
+    fn does_not_follow_generated_tree_symlinks() {
+        let tmp = Scratch::new();
+        let outside = Scratch::new();
+        write_changed(&outside.0.join("keep"), b"untouched").unwrap();
+        std::os::unix::fs::symlink(&outside.0, tmp.0.join("src")).unwrap();
+        reconcile(&tmp.0, &Files::from([("src/main.rs".into(), "new".into())])).unwrap();
+        assert!(!tmp.0.join("src").exists());
+        assert_eq!(fs::read(outside.0.join("keep")).unwrap(), b"untouched");
     }
 }
