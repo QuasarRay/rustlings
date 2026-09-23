@@ -4,13 +4,13 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - website
+      - website/**
       - .github/workflows/website.yml
       - '*.md'
   pull_request:
     branches: [main]
     paths-ignore:
-      - website
+      - website/**
       - .github/workflows/website.yml
       - '*.md'
 
@@ -21,13 +21,13 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Clippy
         run: cargo clippy -- --deny warnings
   fmt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: rustfmt
         run: cargo fmt --all --check
   test:
@@ -36,8 +36,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
-      - uses: swatinem/rust-cache@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: cargo test
         env:
           RUST_BACKTRACE: 1
@@ -45,8 +45,8 @@ jobs:
   dev-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: swatinem/rust-cache@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: Verify every workshop defect and warm checker artifacts
         run: bash exercises/01_catalog/audit.sh
       - name: rustlings dev check
@@ -54,5 +54,5 @@ jobs:
   rumdl:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v7
-        - uses: rvben/rumdl@v0
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        - uses: rvben/rumdl@389e12baa4571b7640bb9f0687cf55946da89e4f # v0
