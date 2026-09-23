@@ -9,10 +9,30 @@ use std::{
     hash::{Hash, Hasher},
     io::Read,
     path::{Component, Path, PathBuf},
-    process::{Command, Stdio},
+    process::Command,
     thread,
     time::{Duration, Instant},
 };
+
+mod process;
+
+#[derive(Debug)]
+struct GradingError {
+    code: u8,
+    message: String,
+}
+impl std::fmt::Display for GradingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.message.fmt(f)
+    }
+}
+impl Error for GradingError {}
+fn outcome<T>(code: u8, message: impl Into<String>) -> Result<T> {
+    Err(Box::new(GradingError {
+        code,
+        message: message.into(),
+    }))
+}
 
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Files = BTreeMap<String, String>;
@@ -257,6 +277,7 @@ impl Workshop {
         identity.extend_from_slice(&probes_raw);
         identity.extend_from_slice(map.as_bytes());
         identity.extend_from_slice(&fs::read(support.join("grader.rs"))?);
+        identity.extend_from_slice(&fs::read(support.join("process.rs"))?);
         identity.extend_from_slice(&environment_identity(&root)?);
         for tool in ["rustc", "cargo"] {
             let out = Command::new(tool)
@@ -324,15 +345,18 @@ impl Workshop {
                 && fs::read_to_string(self.receipt(m.id)).ok().as_deref()
                     != Some(&self.prefix_key(&repairs))
             {
-                return fail(format!(
-                    "LOCKED: complete or recheck `{}` first. An earlier repair is missing, changed, or was verified with a different toolchain.\nRun Rustlings in mission order; no edits to solutions are needed.",
-                    m.name
-                ));
+                return outcome(
+                    3,
+                    format!(
+                        "LOCKED: complete or recheck `{}` first. An earlier repair is missing, changed, or was verified with a different toolchain.\nRun Rustlings in mission order; no edits to solutions are needed.",
+                        m.name
+                    ),
+                );
             }
         }
         Ok(repairs)
     }
-    fn lock(&self) -> Result<Lock> {
+    fn lock(&self, deadline: Instant) -> Result<Lock> {
         let path = self.cache.join("compiler.lock");
         let file = OpenOptions::new()
             .read(true)
@@ -340,16 +364,18 @@ impl Workshop {
             .create(true)
             .truncate(false)
             .open(&path)?;
-        let start = Instant::now();
         loop {
             match file.try_lock() {
                 Ok(()) => return Ok(Lock { _file: file }),
                 Err(std::fs::TryLockError::WouldBlock) => {
-                    if start.elapsed() > Duration::from_secs(24) {
-                        return fail(format!(
-                            "Another course check owns {}. Retry when it finishes.",
-                            path.display()
-                        ));
+                    if Instant::now() >= deadline {
+                        return outcome(
+                            4,
+                            format!(
+                                "Another course check owns {}. Retry when it finishes.",
+                                path.display()
+                            ),
+                        );
                     }
                     thread::sleep(Duration::from_millis(40));
                 }
@@ -374,13 +400,16 @@ impl Workshop {
             _ => Ok(None),
         }
     }
-    fn evaluate(&self, files: &Files, long: bool) -> Result<(bool, String)> {
+    fn evaluate(&self, files: &Files, _long: bool) -> Result<(bool, String)> {
         let input = serialize(files, &self.identity);
         let key = digest(&input);
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
-        let _lock = self.lock()?;
+        // One budget owns queueing, Clippy, and tests together. The course host
+        // grants 600 seconds, leaving 60 seconds for startup and cleanup.
+        let deadline = Instant::now() + Duration::from_secs(540);
+        let _lock = self.lock(deadline)?;
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
@@ -416,54 +445,27 @@ impl Workshop {
             &["test", "--locked", "--workspace", "--", "--test-threads=1"],
         ];
         for args in commands {
-            let log = self.cache.join("command.log");
-            let stdout = File::create(&log)?;
             let mut cmd = Command::new("cargo");
             cmd.args(*args)
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
-                .env("CARGO_TERM_COLOR", "never")
-                .stdin(Stdio::null())
-                .stdout(stdout.try_clone()?)
-                .stderr(stdout);
-            #[cfg(unix)]
-            {
-                use std::os::unix::process::CommandExt;
-                cmd.process_group(0);
+                .env("CARGO_TERM_COLOR", "never");
+            if std::env::var_os("CARGO_BUILD_JOBS").is_none() {
+                cmd.env("CARGO_BUILD_JOBS", "2");
             }
-            let mut child = cmd.spawn()?;
-            let started = Instant::now();
-            let deadline = Duration::from_secs(if long { 240 } else { 22 });
-            let status = loop {
-                if let Some(s) = child.try_wait()? {
-                    break Some(s);
-                }
-                if started.elapsed() > deadline {
-                    #[cfg(unix)]
-                    {
-                        let _ = Command::new("kill")
-                            .args(["-KILL", "--", &format!("-{}", child.id())])
-                            .status();
-                    }
-                    #[cfg(windows)]
-                    {
-                        let _ = Command::new("taskkill")
-                            .args(["/F", "/T", "/PID", &child.id().to_string()])
-                            .status();
-                    }
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    break None;
-                }
-                thread::sleep(Duration::from_millis(20));
-            };
+            let budget = deadline.saturating_duration_since(Instant::now());
+            let (status, output) = process::capture(&mut cmd, budget).map_err(|e| {
+                Box::new(GradingError {
+                    code: if e.kind() == std::io::ErrorKind::TimedOut {
+                        4
+                    } else {
+                        2
+                    },
+                    message: format!("INFRA_ERROR: {e}"),
+                }) as Box<dyn Error>
+            })?;
             report.push_str(&format!("cargo {}\n", args.join(" ")));
-            report.push_str(&fs::read_to_string(&log)?);
-            let Some(status) = status else {
-                return fail(format!(
-                    "Course check exceeded its deadline. Run the documented preparation outside watch mode, then retry.\n{report}"
-                ));
-            };
+            report.push_str(&String::from_utf8_lossy(&output));
             if !status.success() {
                 passed = false;
                 break;
@@ -492,10 +494,13 @@ impl Workshop {
         let files = self.assembled(&repairs)?;
         let (pass, report) = self.evaluate(&files, false)?;
         if !pass {
-            return fail(format!(
-                "MISSION {:03}: {} is pending.\nRepair {}::{} in the mission source, not the generated build files.\n{}",
-                id, m.name, m.file, m.name, report
-            ));
+            return outcome(
+                1,
+                format!(
+                    "REJECTED: mission {:03} {}.\nEdit exercises/{}/{}.rs (restores {}), not target/workshop/engine.\n{}",
+                    id, m.name, m.dir, m.name, m.file, report
+                ),
+            );
         }
         if role == "exercises" {
             write_changed(&self.receipt(id), self.prefix_key(&repairs).as_bytes())?;
@@ -622,7 +627,7 @@ fn main() -> std::process::ExitCode {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{e}");
-            std::process::ExitCode::FAILURE
+            std::process::ExitCode::from(e.downcast_ref::<GradingError>().map_or(2, |e| e.code))
         }
     }
 }

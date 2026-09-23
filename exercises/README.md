@@ -17,7 +17,7 @@ cargo run --manifest-path dev/Cargo.toml --bin catalog_paths -- --prepare
 cargo run -- --no-editor
 ```
 
-The preparation compiles the original checker and runs its regression suite. It can take longer than the existing engine's 30-second per-command limit, so run it directly once before watch mode. It grants no mission completion. Warm mission checks reuse compiled dependencies and validated results.
+The preparation compiles the original checker and runs its regression suite. It grants no mission completion. It is optional for correctness: this fork adds a course-specific command policy that allows cold builds. Native author threads queue behind one compiler permit, each outer command has a 600-second budget, and the verifier shares a 540-second budget across lock waiting, Clippy, and tests. Timeout cleanup terminates descendant processes. Ordinary courses and the pinned reference export retain the original engine policy.
 
 For the normal installed-course experience, build this fork with `cargo build --release --locked`, then use that binary's absolute path in an empty directory:
 
@@ -35,7 +35,7 @@ Use the binary built from this fork. Installing the upstream crate from crates.i
 1. Open the current mission. Its header gives its prerequisite, target function, contract, and failure type.
 2. Read the provided context and predict the failure. You are repairing application behavior, not relearning Rust syntax.
 3. Edit the Rust between `BEGIN RUSTLINGS REPAIR` and `END RUSTLINGS REPAIR`. Keep the markers, adapter, and test intact.
-4. Save. The unchanged Rustlings checker builds the exercise, runs its test, runs Clippy, and executes it. The exercise asks the course verifier to check the actual reconstructed Rustlings source.
+4. Save. Rustlings builds the exercise, runs its test, runs Clippy, and executes it. The additive course command policy bounds compiler concurrency and accommodates cold builds. The exercise asks the course verifier to check the actual reconstructed Rustlings source.
 5. Use `h` for a three-stage hint, `r` to retry, `l` for the mission map, and `n` after completion. `x` resets the current mission.
 6. Earlier repairs are included in every later build. Editing or resetting an earlier mission invalidates its completion evidence; recheck from that mission onward.
 
@@ -88,7 +88,7 @@ cd ../restored-rustlings
 cargo dev check --require-solutions
 ```
 
-The export is the original checker project with your restored functions and its original beginner-course data. It deliberately contains no workshop grader or extra probes. Its original exercises provide a useful independent subject on which to use the checker you restored. The root checker of this fork remains unchanged throughout the course.
+The export is the original checker project with your restored functions and its original beginner-course data. It deliberately contains no workshop grader, course execution policy, or extra probes. Its original exercises provide a useful independent subject on which to use the checker you restored. The host fork adds an opt-in-by-course command policy; existing engine logic and the reference archive remain intact.
 
 For an author-only reference export, append `solutions` to the export command. That explicitly uses reference repairs and does not grant learner progress.
 
@@ -100,7 +100,7 @@ For an author-only reference export, append `solutions` to the export command. T
 | Error in `target/workshop/engine/src/...` | This is the real reconstructed code. Fix the mapped function in the mission file. |
 | `todo!` or a missing binding | Implement the omitted operation; removing the marker without restoring behavior is insufficient. |
 | Compilation succeeds but a test fails | Investigate state, boundaries, command arguments, and exit status. Read the named contract probe. |
-| Deadline on the first check | Run the one-time preparation outside watch mode. A cold dependency build must not be mistaken for a learner bug. |
+| `INFRA_TIMEOUT` or `INFRA_ERROR` | The verifier could not judge the repair. Check tool availability, network access for uncached dependencies, and machine load, then retry. Infrastructure failures never become cached rejections. |
 | Another course check owns the compiler lock | Wait for that check to finish and retry. The OS releases the lock automatically if its verifier exits; the lock file itself can remain. |
 | A course file or reference input was deleted | Reinitialize a separate course directory with the same fork binary and restore the missing fixture. Preserve your edited missions. |
 | An editor save changes several missions | Check them in order. Saved completion flags do not replace source-specific verification receipts. |

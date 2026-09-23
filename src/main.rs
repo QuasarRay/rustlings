@@ -31,6 +31,9 @@ mod run;
 mod term;
 mod watch;
 
+#[path = "../exercises/01_catalog/host.rs"]
+mod workshop_host;
+
 const CURRENT_FORMAT_VERSION: u8 = 1;
 
 fn main() -> Result<ExitCode> {

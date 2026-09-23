@@ -19,6 +19,9 @@ fn run_cmd(
     cwd: Option<&str>,
     output: Option<&mut Vec<u8>>,
 ) -> Result<bool> {
+    if crate::workshop_host::enabled() {
+        return crate::workshop_host::run_command(cmd, description, cwd, output);
+    }
     let spawn = |mut cmd: Command| {
         // The closure drops `cmd` which prevents a pipe deadlock.
         cmd.stdin(Stdio::null())

@@ -18,7 +18,7 @@ name = "catalog_paths"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-input_files = ["runner.rs", "grader.rs", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh"]
+input_files = ["runner.rs", "grader.rs", "host.rs", "process.rs", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh"]
 hint = "1. Contract: Build an exercise path for both a root-level file and a directory. Preserve the exercises/ prefix and .rs suffix.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
 
 [[exercises]]
