@@ -169,7 +169,7 @@ mod workshop_author_dispatch_contracts {
 }
 
 
-src/dev/check.rs	3525
+src/dev/check.rs	3529
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -222,14 +222,12 @@ mod workshop_author_gate_contracts {
     #[test]
     fn unsolved_format_and_solution_checks_accept_and_reject_real_programs() {
         let (_cwd, info, runner) = fixture();
-        check_exercises_unsolved(info, runner).unwrap();
-        check_exercises(info, runner).unwrap();
-        check_solutions(true, info, runner).unwrap();
+        // The composed gate includes the positive unsolved/format/solution checks.
         check(true).unwrap();
         fs::write("exercises/quest.rs", "// TODO: already solved\nfn main() {}\n#[test] fn result() { assert_eq!(2, 2); }\n").unwrap();
-        assert!(check_exercises_unsolved(info, runner).is_err());
+        assert!(check_exercises_unsolved(info, runner).unwrap_err().to_string().contains("already solved"));
         fs::remove_file("solutions/quest.rs").unwrap();
-        assert!(check_solutions(true, info, runner).is_err());
+        assert!(check_solutions(true, info, runner).unwrap_err().to_string().contains("missing"));
         check_solutions(false, info, runner).unwrap();
         let mut invalid = InfoFile::parse().unwrap(); invalid.format_version = 0;
         assert!(check_exercises(Box::leak(Box::new(invalid)), runner).is_err());
@@ -662,7 +660,7 @@ mod workshop_terminal_contracts {
 }
 
 
-src/watch.rs	2288
+src/watch.rs	2181
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -707,11 +705,8 @@ mod workshop_watch_loop_contracts {
         #[cfg(not(windows))] {
             use super::rustix::termios::LocalModes;
             let modes = rustix::termios::MODES.lock().unwrap();
-            assert_eq!(modes.len(), 4);
-            for pair in modes.chunks_exact(2) {
-                assert!(!pair[0].intersects(LocalModes::ICANON | LocalModes::ECHO));
-                assert!(pair[1].contains(LocalModes::ICANON | LocalModes::ECHO));
-            }
+            let original = LocalModes::ICANON | LocalModes::ECHO;
+            assert_eq!(*modes, [LocalModes::empty(), original, LocalModes::empty(), original]);
         }
     }
 }
@@ -734,7 +729,7 @@ fn a_rust_source_change_reaches_the_correct_mission() {
 
 }
 
-src/watch/state.rs	3940
+src/watch/state.rs	3936
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -802,7 +797,7 @@ mod workshop_state_machine_contracts {
         std::fs::write("exercises/probe_compile.rs", "fn main() {}\n").unwrap();
         assert!(matches!(state.check_all_exercises(&mut stdout).unwrap(), ExercisesProgress::AllDone));
         let (resume, received) = std::sync::mpsc::sync_channel(1); state.terminal_event_unpause_sender = resume;
-        *io::ANSWERS.lock().unwrap() = [b'?', b'n'].into();
+        *io::ANSWERS.lock().unwrap() = (*b"?n").into();
         state.reset_exercise(&mut stdout).unwrap(); received.try_recv().unwrap();
         assert_eq!(state.app_state.n_pending(), 0, "cancel must preserve progress");
         io::ANSWERS.lock().unwrap().clear(); assert!(state.reset_exercise(&mut stdout).is_err());
