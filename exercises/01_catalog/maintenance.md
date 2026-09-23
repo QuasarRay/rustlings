@@ -43,3 +43,7 @@ Validated on Linux with Rust 1.98.1:
 | Scope | Existing engine source, production dependency manifests, lockfile, and build script are unchanged. |
 
 Interactive full-screen behavior and external editor integrations retain the manual-validation limits described above. These results do not claim Windows/macOS execution coverage for the course verifier.
+
+## Compiled artifact identity
+
+The disposable main and macro crates include a Cargo-tracked environment dependency on the reconstructed input key and a fresh attempt token. A dedicated test prints each crate's compiled identity before behavioral tests run. The verifier requires both identities to match the requested input; stale or missing identities are infrastructure errors and are never cached as learner rejections. This protects checks when files change faster than a filesystem's timestamp resolution. A regression test changes same-size source while preserving its modification time and verifies Cargo rebuilds the changed behavior. The identity probes never enter an export.
