@@ -72,6 +72,14 @@ panic = "abort"
 pre-release-hook = ["./release-hook.sh"]
 pre-release-commit-message = "Release 🎉"
 
+[package.metadata.workshop]
+name = "Rebuild the Checker"
+course-version = 1
+rust-version = "1.89"
+repository = "https://github.com/QuasarRay/rustlings"
+reference = "a650509c789da1656f813392b16aa1fa043b7f3e"
+distribution = "source checkout; not published as the upstream crates.io course"
+
 [workspace.lints.rust]
 unsafe_code = "forbid"
 unstable_features = "forbid"

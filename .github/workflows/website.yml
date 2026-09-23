@@ -5,15 +5,15 @@ on:
   push:
     branches: [main]
     paths:
-      - website
+      - website/**
       - .github/workflows/website.yml
 
 jobs:
   rumdl:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v7
-        - uses: rvben/rumdl@v0
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        - uses: rvben/rumdl@389e12baa4571b7640bb9f0687cf55946da89e4f # v0
   build:
     needs: rumdl
     defaults:
@@ -21,17 +21,20 @@ jobs:
         working-directory: website
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install TailwindCSS
         run: npm install
       - name: Build CSS
         run: npx @tailwindcss/cli -m -i input.css -o static/main.css
       - name: Download Zola
-        run: curl -fsSL https://github.com/getzola/zola/releases/download/v0.23.4/zola-v0.23.4-x86_64-unknown-linux-gnu.tar.gz | tar xz
+        run: |
+          curl -fsSL https://github.com/getzola/zola/releases/download/v0.23.4/zola-v0.23.4-x86_64-unknown-linux-gnu.tar.gz -o zola.tar.gz
+          echo '54d1a347781b2f32330914fcc02def81c7e3ddb6111b36d1cc89c06557aed1de  zola.tar.gz' | sha256sum --check --status
+          tar xzf zola.tar.gz
       - name: Build site
         run: ./zola build
       - name: Upload static files as artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: website/public/
   deploy:
@@ -47,4 +50,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v5
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5

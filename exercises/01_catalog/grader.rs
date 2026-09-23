@@ -9,13 +9,49 @@ use std::{
     hash::{Hash, Hasher},
     io::Read,
     path::{Component, Path, PathBuf},
-    process::{Command, Stdio},
+    process::Command,
     thread,
     time::{Duration, Instant},
 };
 
+mod process;
+
+#[derive(Debug)]
+struct GradingError {
+    code: u8,
+    message: String,
+}
+impl std::fmt::Display for GradingError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.message.fmt(f)
+    }
+}
+impl Error for GradingError {}
+fn outcome<T>(code: u8, message: impl Into<String>) -> Result<T> {
+    Err(Box::new(GradingError {
+        code,
+        message: message.into(),
+    }))
+}
+
 type Result<T> = std::result::Result<T, Box<dyn Error>>;
 type Files = BTreeMap<String, String>;
+const BUILD_ID_ENV: &str = "WORKSHOP_COMPILED_INPUT";
+fn build_identity_probe(label: &str) -> String {
+    format!(
+        r#"
+// Cargo tracks this environment dependency even when source timestamps repeat.
+const _: Option<&str> = option_env!("WORKSHOP_COMPILED_INPUT");
+#[cfg(test)]
+#[test]
+fn workshop_build_identity() {{
+    let runtime = std::env::var("WORKSHOP_COMPILED_INPUT").ok();
+    assert_eq!(option_env!("WORKSHOP_COMPILED_INPUT"), runtime.as_deref(), "WORKSHOP_STALE_ARTIFACT");
+    println!("WORKSHOP_BUILD_ID:{label}:{{}}", runtime.as_deref().unwrap_or("manual"));
+}}
+"#
+    )
+}
 const BEGIN: &str = "// BEGIN RUSTLINGS REPAIR\n";
 const END: &str = "\n// END RUSTLINGS REPAIR";
 #[derive(Clone)]
@@ -106,6 +142,106 @@ fn serialize(files: &Files, identity: &str) -> Vec<u8> {
     }
     bytes
 }
+// A generated project must contain exactly the requested inputs. In particular,
+// a stale build.rs, Cargo configuration, or test must never participate in grading.
+fn reconcile(directory: &Path, files: &Files) -> Result<()> {
+    fn visit(root: &Path, dir: &Path, files: &Files) -> Result<()> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            let relative = path
+                .strip_prefix(root)?
+                .to_string_lossy()
+                .replace('\\', "/");
+            let kind = entry.file_type()?;
+            if kind.is_dir() {
+                if files.keys().any(|p| p.starts_with(&format!("{relative}/"))) {
+                    visit(root, &path, files)?;
+                } else {
+                    fs::remove_dir_all(path)?;
+                }
+            } else if kind.is_symlink() || !files.contains_key(&relative) {
+                fs::remove_file(path)?;
+            }
+        }
+        Ok(())
+    }
+    if fs::symlink_metadata(directory).is_ok_and(|m| m.file_type().is_symlink()) {
+        return fail("generated project directory must not be a symbolic link");
+    }
+    fs::create_dir_all(directory)?;
+    visit(directory, directory, files)
+}
+
+fn environment_identity(root: &Path) -> Result<Vec<u8>> {
+    let mut inputs = Files::new();
+    inputs.insert(
+        "platform".into(),
+        format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
+    );
+    for (key, value) in std::env::vars_os() {
+        let name = key.to_string_lossy();
+        if name.starts_with("RUST")
+            || name.starts_with("CARGO_")
+            || [
+                "PATH",
+                "CC",
+                "CXX",
+                "AR",
+                "LD",
+                "CFLAGS",
+                "CXXFLAGS",
+                "LDFLAGS",
+                "SDKROOT",
+                "MACOSX_DEPLOYMENT_TARGET",
+            ]
+            .contains(&name.as_ref())
+        {
+            // Cargo changes these labels for each adapter. They do not configure
+            // the restored project, and must not invalidate cumulative receipts.
+            if ["CARGO_BIN_NAME", "CARGO_MAKEFLAGS"].contains(&name.as_ref())
+                || name.starts_with("CARGO_PKG_")
+                || name.starts_with("CARGO_MANIFEST_")
+            {
+                continue;
+            }
+            inputs.insert(format!("env:{name}"), format!("{value:?}"));
+        }
+    }
+    let mut directories: Vec<_> = root
+        .join("target/workshop/engine")
+        .ancestors()
+        .map(Path::to_path_buf)
+        .collect();
+    if let Some(home) = std::env::var_os("CARGO_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
+        .or_else(|| std::env::var_os("USERPROFILE").map(|p| PathBuf::from(p).join(".cargo")))
+    {
+        directories.push(home.parent().unwrap_or(&home).to_path_buf());
+        for name in ["config", "config.toml"] {
+            let path = home.join(name);
+            if path.is_file() {
+                inputs.insert(
+                    format!("config:{}", path.display()),
+                    fs::read_to_string(path)?,
+                );
+            }
+        }
+    }
+    for directory in directories {
+        for name in ["config", "config.toml"] {
+            let path = directory.join(".cargo").join(name);
+            if path.is_file() {
+                inputs.insert(
+                    format!("config:{}", path.display()),
+                    fs::read_to_string(path)?,
+                );
+            }
+        }
+    }
+    Ok(serialize(&inputs, "course-environment-v1"))
+}
 // OS-owned lock lifetime survives neither normal exit nor interruption.
 // Keeping the file itself is harmless: the lock belongs to this open handle.
 struct Lock {
@@ -158,8 +294,13 @@ impl Workshop {
         identity.extend_from_slice(&probes_raw);
         identity.extend_from_slice(map.as_bytes());
         identity.extend_from_slice(&fs::read(support.join("grader.rs"))?);
+        identity.extend_from_slice(&fs::read(support.join("process.rs"))?);
+        identity.extend_from_slice(&environment_identity(&root)?);
         for tool in ["rustc", "cargo"] {
-            let out = Command::new(tool).arg("--version").output()?;
+            let out = Command::new(tool)
+                .arg("--version")
+                .arg("--verbose")
+                .output()?;
             if !out.status.success() {
                 return fail(format!("{tool} is unavailable"));
             }
@@ -221,15 +362,18 @@ impl Workshop {
                 && fs::read_to_string(self.receipt(m.id)).ok().as_deref()
                     != Some(&self.prefix_key(&repairs))
             {
-                return fail(format!(
-                    "LOCKED: complete or recheck `{}` first. An earlier repair is missing, changed, or was verified with a different toolchain.\nRun Rustlings in mission order; no edits to solutions are needed.",
-                    m.name
-                ));
+                return outcome(
+                    3,
+                    format!(
+                        "LOCKED: complete or recheck `{}` first. An earlier repair is missing, changed, or was verified with a different toolchain.\nRun Rustlings in mission order; no edits to solutions are needed.",
+                        m.name
+                    ),
+                );
             }
         }
         Ok(repairs)
     }
-    fn lock(&self) -> Result<Lock> {
+    fn lock(&self, deadline: Instant) -> Result<Lock> {
         let path = self.cache.join("compiler.lock");
         let file = OpenOptions::new()
             .read(true)
@@ -237,16 +381,18 @@ impl Workshop {
             .create(true)
             .truncate(false)
             .open(&path)?;
-        let start = Instant::now();
         loop {
             match file.try_lock() {
                 Ok(()) => return Ok(Lock { _file: file }),
                 Err(std::fs::TryLockError::WouldBlock) => {
-                    if start.elapsed() > Duration::from_secs(24) {
-                        return fail(format!(
-                            "Another course check owns {}. Retry when it finishes.",
-                            path.display()
-                        ));
+                    if Instant::now() >= deadline {
+                        return outcome(
+                            4,
+                            format!(
+                                "Another course check owns {}. Retry when it finishes.",
+                                path.display()
+                            ),
+                        );
                     }
                     thread::sleep(Duration::from_millis(40));
                 }
@@ -267,21 +413,40 @@ impl Workshop {
         };
         match status {
             "PASS" => Ok(Some((true, output.into()))),
-            "FAIL" => Ok(Some((false, output.into()))),
+            // A tool/filesystem failure can surface as a failed Cargo test.
+            // Retrying must recover without changing a learner's source.
+            "FAIL" => Ok(None),
             _ => Ok(None),
         }
     }
-    fn evaluate(&self, files: &Files, long: bool) -> Result<(bool, String)> {
-        let input = serialize(files, &self.identity);
+    fn evaluate(&self, files: &Files, _long: bool) -> Result<(bool, String)> {
+        self.evaluate_filtered(files, None)
+    }
+    fn evaluate_filtered(&self, files: &Files, filter: Option<&str>) -> Result<(bool, String)> {
+        let identity = format!("{}\nfilter={filter:?}", self.identity);
+        let input = serialize(files, &identity);
         let key = digest(&input);
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
-        let _lock = self.lock()?;
+        // One budget owns queueing, Clippy, and tests together. The course host
+        // grants 600 seconds, leaving 60 seconds for startup and cleanup.
+        let deadline = Instant::now() + Duration::from_secs(540);
+        let _lock = self.lock(deadline)?;
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
+        // Force a fresh crate rebuild on an uncached attempt, including retries
+        // after infrastructure failure; dependency artifacts remain reusable.
+        let build_id = format!(
+            "{key}:{}:{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_nanos()
+        );
         let build = self.cache.join("engine");
+        reconcile(&build, files)?;
         for (path, text) in files {
             let mut text = text.clone();
             // The original excluded exercise packages assume there is no outer
@@ -294,12 +459,20 @@ impl Workshop {
                 text.push_str("\n");
                 text.push_str(probes);
             }
+            if path == "src/main.rs" || path == "rustlings-macros/src/lib.rs" {
+                text.push_str(&build_identity_probe(path));
+            }
             write_changed(&build.join(path), text.as_bytes())?;
         }
         let target = self.cache.join("engine-target");
         let mut report = String::new();
         let mut passed = true;
-        let commands: &[&[&str]] = &[
+        let mut test_args = vec!["test", "--locked", "--workspace"];
+        if let Some(filter) = filter {
+            test_args.push(filter);
+        }
+        test_args.extend(["--", "--test-threads=1"]);
+        let mut commands: Vec<&[&str]> = vec![
             &[
                 "clippy",
                 "--locked",
@@ -309,58 +482,88 @@ impl Workshop {
                 "-D",
                 "warnings",
             ],
-            &["test", "--locked", "--workspace", "--", "--test-threads=1"],
+            &[
+                "test",
+                "--locked",
+                "--workspace",
+                "workshop_build_identity",
+                "--",
+                "--test-threads=1",
+                "--nocapture",
+            ],
+            &test_args,
         ];
+        // This upstream branch is deliberately disabled in debug builds.
+        // Check its release behavior as well; ordinary debug tests cannot do so.
+        if filter.is_none() || filter == Some("app_state::") {
+            commands.push(&[
+                "test",
+                "--locked",
+                "--release",
+                "--bin",
+                "rustlings",
+                "workshop_release_contracts",
+                "--",
+                "--test-threads=1",
+            ]);
+        }
         for args in commands {
-            let log = self.cache.join("command.log");
-            let stdout = File::create(&log)?;
             let mut cmd = Command::new("cargo");
-            cmd.args(*args)
+            cmd.args(args)
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
-                .env("CARGO_TERM_COLOR", "never")
-                .stdin(Stdio::null())
-                .stdout(stdout.try_clone()?)
-                .stderr(stdout);
-            #[cfg(unix)]
-            {
-                use std::os::unix::process::CommandExt;
-                cmd.process_group(0);
+                .env(BUILD_ID_ENV, &build_id)
+                .env("CARGO_TERM_COLOR", "never");
+            if std::env::var_os("CARGO_BUILD_JOBS").is_none() {
+                cmd.env("CARGO_BUILD_JOBS", "2");
             }
-            let mut child = cmd.spawn()?;
-            let started = Instant::now();
-            let deadline = Duration::from_secs(if long { 240 } else { 22 });
-            let status = loop {
-                if let Some(s) = child.try_wait()? {
-                    break Some(s);
-                }
-                if started.elapsed() > deadline {
-                    #[cfg(unix)]
-                    {
-                        let _ = Command::new("kill")
-                            .args(["-KILL", "--", &format!("-{}", child.id())])
-                            .status();
-                    }
-                    #[cfg(windows)]
-                    {
-                        let _ = Command::new("taskkill")
-                            .args(["/F", "/T", "/PID", &child.id().to_string()])
-                            .status();
-                    }
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    break None;
-                }
-                thread::sleep(Duration::from_millis(20));
-            };
+            let budget = deadline.saturating_duration_since(Instant::now());
+            let (status, output) = process::capture(&mut cmd, budget).map_err(|e| {
+                Box::new(GradingError {
+                    code: if e.kind() == std::io::ErrorKind::TimedOut {
+                        4
+                    } else {
+                        2
+                    },
+                    message: format!("INFRA_ERROR: {e}"),
+                }) as Box<dyn Error>
+            })?;
             report.push_str(&format!("cargo {}\n", args.join(" ")));
-            report.push_str(&fs::read_to_string(&log)?);
-            let Some(status) = status else {
-                return fail(format!(
-                    "Course check exceeded its deadline. Run the documented preparation outside watch mode, then retry.\n{report}"
-                ));
-            };
+            report.push_str(&String::from_utf8_lossy(&output));
+            if args.contains(&"workshop_build_identity") {
+                let output = String::from_utf8_lossy(&output);
+                if !status.success()
+                    || ["src/main.rs", "rustlings-macros/src/lib.rs"]
+                        .iter()
+                        .any(|path| {
+                            !output.contains(&format!("WORKSHOP_BUILD_ID:{path}:{build_id}"))
+                        })
+                {
+                    return outcome(
+                        2,
+                        format!(
+                            "INFRA_ERROR: compiled artifacts do not match the reconstructed input; no grading result was cached.\n{report}"
+                        ),
+                    );
+                }
+            }
             if !status.success() {
+                if [
+                    "Permission denied (os error 13)",
+                    "kind: PermissionDenied",
+                    "Text file busy (os error 26)",
+                    "No space left on device (os error 28)",
+                ]
+                .iter()
+                .any(|diagnostic| report.contains(diagnostic))
+                {
+                    return outcome(
+                        2,
+                        format!(
+                            "INFRA_ERROR: a process or filesystem resource prevented evaluation. No rejection was cached; retry after resolving the resource error.\n{report}"
+                        ),
+                    );
+                }
                 passed = false;
                 break;
             }
@@ -368,11 +571,10 @@ impl Workshop {
         let dir = self.cache.join("results");
         fs::create_dir_all(&dir)?;
         // The full input is checked as well as its hash; hash collisions cannot grant a pass.
-        fs::write(dir.join(format!("{key}.input")), input)?;
-        fs::write(
-            dir.join(format!("{key}.report")),
-            format!("{}\n{report}", if passed { "PASS" } else { "FAIL" }),
-        )?;
+        if passed {
+            fs::write(dir.join(format!("{key}.input")), input)?;
+            fs::write(dir.join(format!("{key}.report")), format!("PASS\n{report}"))?;
+        }
         Ok((passed, report))
     }
     fn check(&self, id: usize, role: &str, source: &str) -> Result<()> {
@@ -388,10 +590,13 @@ impl Workshop {
         let files = self.assembled(&repairs)?;
         let (pass, report) = self.evaluate(&files, false)?;
         if !pass {
-            return fail(format!(
-                "MISSION {:03}: {} is pending.\nRepair {}::{} in the mission source, not the generated build files.\n{}",
-                id, m.name, m.file, m.name, report
-            ));
+            return outcome(
+                1,
+                format!(
+                    "REJECTED: mission {:03} {}.\nEdit exercises/{}/{}.rs (restores {}), not target/workshop/engine.\n{}",
+                    id, m.name, m.dir, m.name, m.file, report
+                ),
+            );
         }
         if role == "exercises" {
             write_changed(&self.receipt(id), self.prefix_key(&repairs).as_bytes())?;
@@ -453,6 +658,159 @@ impl Workshop {
         println!("{summary}");
         Ok(())
     }
+    fn mutations(&self, first: usize, last: usize) -> Result<()> {
+        if first == 0 || first > last || last > self.missions.len() {
+            return fail("mutation range must be inside the ordered mission catalog");
+        }
+        let baseline: Vec<_> = self.missions.iter().map(|m| self.original(m)).collect();
+        let (pass, report) = self.evaluate(&self.base, true)?;
+        if !pass {
+            return fail(format!(
+                "Reference failed before mutation testing:\n{report}"
+            ));
+        }
+        let mut escaped = Vec::new();
+        let mut evidence = String::from("id\tmission\tkind\ttarget\tresult\texecuted_tests\n");
+        for m in self
+            .missions
+            .iter()
+            .filter(|m| m.id >= first && m.id <= last)
+        {
+            let original = &baseline[m.id - 1];
+            let mut variants = Vec::new();
+            let mut mutant = original.clone();
+            let marker = format!("WORKSHOP_MUTATION_{}", m.id);
+            if original.contains("const fn") {
+                let value = mutant.rfind("true").ok_or("missing boolean literal")?;
+                mutant.replace_range(value..value + 4, "false");
+                variants.push(("value", mutant));
+            } else {
+                let opening = original.find('{').ok_or("missing function body")? + 1;
+                mutant.insert_str(
+                    opening,
+                    &format!("\nif std::hint::black_box(true) {{ panic!(\"{marker}\"); }}\n"),
+                );
+                variants.push(("reachability", mutant));
+            }
+            // Compiling semantic faults supplement the minimum reachability check.
+            // Each changes a returned value, boundary, predicate or side effect.
+            let semantic = match m.id {
+                1 => Some(("push_str(\"exercises/\")", "push_str(\"solutions/\")")),
+                4 => Some(("push_str(\"solutions/\")", "push_str(\"exercises/\")")),
+                9 => Some((".arg(\"-q\")", ".arg(\"--verbose\")")),
+                17 => Some((
+                    "e.kind() != io::ErrorKind::AlreadyExists",
+                    "e.kind() == io::ErrorKind::AlreadyExists",
+                )),
+                20 => Some(("exercise_files.exercise", "exercise_files.solution")),
+                24 => Some(("as u32 - self.n_done", "as u32 + self.n_done")),
+                28 => Some(("self.n_done += 1", "self.n_done += 2")),
+                34 => Some(("if cfg!(debug_assertions)", "if std::hint::black_box(true)")),
+                41 => Some(("self.len += n", "self.len += n + 1")),
+                49 => Some((
+                    "selected.saturating_sub(max_scroll_padding)",
+                    "selected.saturating_add(max_scroll_padding)",
+                )),
+                54 => Some(("max_n_rows_to_display / 4", "max_n_rows_to_display / 2")),
+                67 => Some(("store(true, Relaxed)", "store(false, Relaxed)")),
+                74 => Some((
+                    "current_exercise_ind() != exercise_ind",
+                    "current_exercise_ind() == exercise_ind",
+                )),
+                75 => Some(("=> true,", "=> false,")),
+                81 => Some(("self.term_width != width", "self.term_width == width")),
+                86 => Some(("|status| status.success()", "|status| !status.success()")),
+                91 => Some(("10 * id", "16 * id")),
+                97 => Some((
+                    "!c.is_alphanumeric() && *c != '_'",
+                    "!c.is_alphanumeric() || *c != '_'",
+                )),
+                98 => Some(("old_bins != new_bins", "old_bins == new_bins")),
+                _ => None,
+            };
+            if let Some((from, to)) = semantic {
+                if !original.contains(from) {
+                    return fail(format!("mutation anchor changed for {}", m.name));
+                }
+                variants.push(("value", original.replacen(from, to, 1)));
+            }
+            for (kind, mutant) in variants {
+                let mut repairs = baseline.clone();
+                repairs[m.id - 1] = mutant;
+                let module = m
+                    .file
+                    .strip_prefix("src/")
+                    .unwrap_or_default()
+                    .trim_end_matches(".rs")
+                    .replace('/', "::")
+                    + "::";
+                let filter = if self.probes.contains_key(&m.file) && m.file != "src/main.rs" {
+                    Some(module.as_str())
+                } else {
+                    None
+                };
+                let files = self.assembled(&repairs)?;
+                let (mut pass, mut report) = self.evaluate_filtered(&files, filter)?;
+                // A local filter is only a speed optimization. Integration tests
+                // and another module may be the real caller of this function.
+                if pass && filter.is_some() {
+                    (pass, report) = self.evaluate(&files, true)?;
+                }
+                let ran_tests = report.contains("cargo test --locked");
+                let macro_execution =
+                    m.file == "rustlings-macros/src/lib.rs" && report.contains(&marker);
+                let observed_fault = kind == "value" || report.contains(&marker);
+                let status = if pass {
+                    "ESCAPED"
+                } else if !ran_tests && !macro_execution {
+                    "INVALID_MUTANT"
+                } else if !observed_fault {
+                    "UNOBSERVED_FAILURE"
+                } else {
+                    "CAUGHT"
+                };
+                if status != "CAUGHT" {
+                    escaped.push(format!("{} {} {kind}: {status}", m.id, m.name));
+                }
+                let tests = report
+                    .lines()
+                    .filter_map(|line| {
+                        line.strip_prefix("test ")
+                            .and_then(|line| line.split_once(" ... "))
+                            .map(|(name, _)| name)
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let tests = if macro_execution {
+                    "proc_macro_expansion"
+                } else {
+                    &tests
+                };
+                evidence.push_str(&format!(
+                    "{}\t{}\t{kind}\t{}\t{status}\t{tests}\n",
+                    m.id, m.name, m.file
+                ));
+                fs::write(
+                    self.cache.join(format!("mutation-{:03}-{kind}.log", m.id)),
+                    &report,
+                )?;
+                println!(
+                    "mutation {:03}/{} {kind}: {status} — {}",
+                    m.id,
+                    self.missions.len(),
+                    m.name
+                );
+            }
+        }
+        fs::write(self.cache.join("mutation-audit.tsv"), evidence)?;
+        if !escaped.is_empty() {
+            return fail(format!(
+                "Behavioral evidence is incomplete:\n{}",
+                escaped.join("\n")
+            ));
+        }
+        Ok(())
+    }
     fn export(&self, dest: &Path, role: &str) -> Result<()> {
         if dest.exists() {
             return fail("export destination must not exist");
@@ -499,11 +857,24 @@ fn run() -> Result<()> {
             Ok(())
         }
         "audit" => workshop.audit(),
+        "mutations" => workshop.mutations(
+            args.get(3).map(|s| s.parse()).transpose()?.unwrap_or(1),
+            args.get(4)
+                .map(|s| s.parse())
+                .transpose()?
+                .unwrap_or(workshop.missions.len()),
+        ),
         "check" => {
             let id = args.get(3).ok_or("missing mission")?.parse()?;
             let role = args.get(4).ok_or("missing role")?;
             let mut source = String::new();
             std::io::stdin().read_to_string(&mut source)?;
+            workshop.check(id, role, &source)
+        }
+        "check-file" => {
+            let id = args.get(3).ok_or("missing mission")?.parse()?;
+            let role = args.get(4).ok_or("missing role")?;
+            let source = fs::read_to_string(args.get(5).ok_or("missing source path")?)?;
             workshop.check(id, role, &source)
         }
         "export" => workshop.export(
@@ -518,7 +889,146 @@ fn main() -> std::process::ExitCode {
         Ok(()) => std::process::ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("{e}");
-            std::process::ExitCode::FAILURE
+            std::process::ExitCode::from(e.downcast_ref::<GradingError>().map_or(2, |e| e.code))
         }
+    }
+}
+
+#[cfg(test)]
+mod verifier_tests {
+    use super::*;
+    struct Scratch(PathBuf);
+    impl Scratch {
+        fn new() -> Self {
+            static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+            let n = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let p =
+                std::env::temp_dir().join(format!("rustlings-grader-{}-{n}", std::process::id()));
+            fs::create_dir(&p).unwrap();
+            Self(p)
+        }
+    }
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+    #[test]
+    fn removes_untracked_build_inputs_and_preserves_expected_files() {
+        let tmp = Scratch::new();
+        write_changed(&tmp.0.join("src/main.rs"), b"expected").unwrap();
+        write_changed(&tmp.0.join("build.rs"), b"stale").unwrap();
+        write_changed(&tmp.0.join(".cargo/config.toml"), b"stale").unwrap();
+        write_changed(&tmp.0.join("src/old.rs"), b"stale").unwrap();
+        let files = Files::from([("src/main.rs".into(), "expected".into())]);
+        reconcile(&tmp.0, &files).unwrap();
+        assert_eq!(
+            fs::read_to_string(tmp.0.join("src/main.rs")).unwrap(),
+            "expected"
+        );
+        assert!(!tmp.0.join("build.rs").exists());
+        assert!(!tmp.0.join(".cargo").exists());
+        assert!(!tmp.0.join("src/old.rs").exists());
+    }
+    #[test]
+    fn cargo_config_changes_invalidate_the_environment_identity() {
+        let tmp = Scratch::new();
+        let before = environment_identity(&tmp.0).unwrap();
+        write_changed(
+            &tmp.0.join(".cargo/config.toml"),
+            b"[build]\nrustflags = ['--cfg', 'changed']\n",
+        )
+        .unwrap();
+        let after = environment_identity(&tmp.0).unwrap();
+        assert_ne!(before, after);
+        assert_eq!(after, environment_identity(&tmp.0).unwrap());
+    }
+    #[test]
+    fn a_persisted_tool_failure_does_not_block_retrying_unchanged_source() {
+        let tmp = Scratch::new();
+        let workshop = Workshop {
+            root: tmp.0.clone(),
+            cache: tmp.0.clone(),
+            base: Files::new(),
+            probes: Files::new(),
+            missions: Vec::new(),
+            identity: String::new(),
+        };
+        let input = b"unchanged learner source";
+        let key = digest(input);
+        let results = tmp.0.join("results");
+        write_changed(&results.join(format!("{key}.input")), input).unwrap();
+        write_changed(
+            &results.join(format!("{key}.report")),
+            b"FAIL\nPermission denied (os error 13)",
+        )
+        .unwrap();
+        assert!(workshop.cached(&key, input).unwrap().is_none());
+        write_changed(
+            &results.join(format!("{key}.report")),
+            b"PASS\nverified after tool recovery",
+        )
+        .unwrap();
+        assert!(workshop.cached(&key, input).unwrap().unwrap().0);
+        assert!(
+            workshop
+                .cached(&key, b"different source")
+                .unwrap()
+                .is_none()
+        );
+    }
+    #[test]
+    fn cargo_rebuilds_changed_content_even_when_source_mtime_is_preserved() {
+        let tmp = Scratch::new();
+        write_changed(
+            &tmp.0.join("Cargo.toml"),
+            b"[package]\nname='workshop_freshness'\nversion='0.0.0'\nedition='2024'\n[workspace]\n",
+        )
+        .unwrap();
+        let source = tmp.0.join("src/lib.rs");
+        let mut timestamp = None;
+        for (identity, value) in [("first", "one"), ("second", "two")] {
+            let content = format!(
+                "#[test] fn changed_value() {{ assert_eq!(\"{value}\", std::env::var(\"EXPECTED_VALUE\").unwrap()); }}\n{}",
+                build_identity_probe("fixture")
+            );
+            write_changed(&source, content.as_bytes()).unwrap();
+            if let Some(time) = timestamp {
+                File::options()
+                    .write(true)
+                    .open(&source)
+                    .unwrap()
+                    .set_times(fs::FileTimes::new().set_modified(time))
+                    .unwrap();
+            } else {
+                timestamp = Some(fs::metadata(&source).unwrap().modified().unwrap());
+            }
+            let (status, output) = process::capture(
+                Command::new("cargo")
+                    .args(["test", "--offline", "--", "--nocapture"])
+                    .current_dir(&tmp.0)
+                    .env("CARGO_TARGET_DIR", tmp.0.join("target"))
+                    .env(BUILD_ID_ENV, identity)
+                    .env("EXPECTED_VALUE", value),
+                Duration::from_secs(60),
+            )
+            .unwrap();
+            assert!(status.success(), "{}", String::from_utf8_lossy(&output));
+            assert!(
+                String::from_utf8_lossy(&output)
+                    .contains(&format!("WORKSHOP_BUILD_ID:fixture:{identity}"))
+            );
+        }
+    }
+    #[cfg(unix)]
+    #[test]
+    fn does_not_follow_generated_tree_symlinks() {
+        let tmp = Scratch::new();
+        let outside = Scratch::new();
+        write_changed(&outside.0.join("keep"), b"untouched").unwrap();
+        std::os::unix::fs::symlink(&outside.0, tmp.0.join("src")).unwrap();
+        reconcile(&tmp.0, &Files::from([("src/main.rs".into(), "new".into())])).unwrap();
+        assert!(!tmp.0.join("src").exists());
+        assert_eq!(fs::read(outside.0.join("keep")).unwrap(), b"untouched");
     }
 }

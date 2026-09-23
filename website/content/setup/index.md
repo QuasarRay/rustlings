@@ -1,80 +1,24 @@
 +++
-title = "Setup"
+title = "Course setup"
 +++
 
-## Installing Rust
+## Requirements
 
-Before installing Rustlings, you must have the **latest version of Rust** installed.
-Visit [www.rust-lang.org/tools/install](https://www.rust-lang.org/tools/install) for further instructions.
-This will also install _Cargo_, Rust's package/project manager.
+Install Rust 1.89 or newer with Cargo, Clippy and rustfmt, plus Git and a native C linker. The original engine's 1.88 minimum is separate from this course's runtime minimum.
 
-> 🐧 If you are on **Linux**, make sure you have `gcc` installed (_for a linker_).
->
-> Debian: `sudo apt install gcc`\
-> Fedora: `sudo dnf install gcc`
->
-> 🍎 If you are on **MacOS**, make sure you have _Xcode and its developer tools_ installed: `xcode-select --install`
+## Start from this fork
 
-## Installing Rustlings
-
-The following command will download and compile Rustlings:
-
-```bash
-cargo install rustlings
+```sh
+git clone https://github.com/QuasarRay/rustlings.git
+cd rustlings
+rustup component add clippy rustfmt
+cargo run --locked -- workshop doctor
+cargo run --locked -- workshop prepare
+cargo run --locked -- --no-editor
 ```
 
-{% <details summary="If the installation fails…"> %}
+Preparation checks the actual reference project and does not award progress. Run `cargo run --locked -- workshop info` to confirm the course identity. Installing the crates.io `rustlings` package gives the upstream beginner course.
 
-- Make sure you have the latest Rust version by running `rustup update`
-- Try adding the `--locked` flag: `cargo install rustlings --locked`
-- Otherwise, please [report the issue](https://github.com/rust-lang/rustlings/issues/new)
+For a separate initialized course, build this fork with `cargo build --release --locked`, run that binary's absolute path with `init` from an empty directory, and enter the resulting `rustlings` directory. Continue using the same fork binary. It installs the course inputs and locked dependencies.
 
-{% </details> %}
-
-## Initialization
-
-After installing Rustlings, run the following command to initialize the `rustlings/` directory:
-
-```bash
-rustlings init
-```
-
-{% <details summary="If the command <code>rustlings</code> can't be found…"> %}
-
-You are probably using Linux and installed Rust using your package manager.
-
-Cargo installs binaries to the directory `~/.cargo/bin`.
-Sadly, package managers often don't add `~/.cargo/bin` to your `PATH` environment variable.
-
-- Either add `~/.cargo/bin` manually to `PATH`
-- Or uninstall Rust from the package manager and [install it using the official way with `rustup`](https://www.rust-lang.org/tools/install)
-
-{% </details> %}
-
-Now, go into the newly initialized directory and launch Rustlings for further instructions on getting started with the exercises:
-
-```bash
-cd rustlings/
-rustlings
-```
-
-## Working environment
-
-### Editor
-
-Our general recommendation is [VS Code](https://code.visualstudio.com/) with the [rust-analyzer plugin](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
-But any editor that supports [rust-analyzer](https://rust-analyzer.github.io/) should be enough for working on the exercises.
-
-### Terminal
-
-While working with Rustlings, please use a modern terminal for the best user experience.
-The default terminal on Linux and Mac should be sufficient.
-On Windows, we recommend the [Windows Terminal](https://aka.ms/terminal).
-
-### Offline documentation
-
-Whenever you're working on Rustlings offline, you can access a local copy of the book or the standard library documentation by running `rustup doc --book` or `rustup doc --std`.
-
-## Usage
-
-After being done with the setup, visit the [**usage**](@/usage/index.md) page for some info about using Rustlings 🚀
+Use any Rust editor with rust-analyzer. For failures, see the [course troubleshooting guide](https://github.com/QuasarRay/rustlings/blob/main/exercises/01_catalog/troubleshooting.md). Report fork issues to [QuasarRay/rustlings](https://github.com/QuasarRay/rustlings/issues).

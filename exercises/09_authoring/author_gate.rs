@@ -18,8 +18,29 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
 pub fn check(require_solutions: bool) -> Result<()> {
-    // TODO: Implement this operation using the contract above.
-    todo!("author_gate")
+    let info_file = InfoFile::parse()?;
+
+    if info_file.exercises.len() > MAX_N_EXERCISES {
+        bail!("The maximum number of exercises is {MAX_N_EXERCISES}");
+    }
+
+    if cfg!(debug_assertions) {
+        // A hack to make `cargo dev check` work when developing Rustlings.
+        check_cargo_toml(&info_file.exercises, "dev/Cargo.toml", b"../")?;
+    } else {
+        check_cargo_toml(&info_file.exercises, "Cargo.toml", b"")?;
+    }
+
+    // LEAKING: Used until the end of the program.
+    let cmd_runner = Box::leak(Box::new(CmdRunner::build()?));
+    let info_file = Box::leak(Box::new(info_file));
+
+    todo!("author_gate");
+    check_solutions(require_solutions, info_file, cmd_runner)?;
+
+    println!("Everything looks fine!");
+
+    Ok(())
 }
 // END RUSTLINGS REPAIR
     };

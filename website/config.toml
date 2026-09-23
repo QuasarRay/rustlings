@@ -1,6 +1,6 @@
-base_url = "https://rustlings.rust-lang.org"
-title = "Rustlings"
-description = "Small exercises to get you used to reading and writing Rust code!"
+base_url = "https://quasarray.github.io/rustlings"
+title = "Rebuild the Checker"
+description = "Restore the real Rustlings checker through 112 advanced missions."
 
 compile_sass = false
 build_search_index = false
@@ -28,14 +28,14 @@ name = "Community Exercises"
 url = "@/community-exercises/index.md"
 [[extra.menu_items]]
 name = "Q&A"
-url = "https://github.com/rust-lang/rustlings/discussions/categories/q-a?discussions_q="
+url = "https://github.com/QuasarRay/rustlings/discussions/categories/q-a?discussions_q="
 
 [[extra.footer_items]]
 name = "Repository"
-url = "https://github.com/rust-lang/rustlings"
+url = "https://github.com/QuasarRay/rustlings"
 [[extra.footer_items]]
 name = "Changelog"
-url = "https://github.com/rust-lang/rustlings/blob/main/CHANGELOG.md"
+url = "https://github.com/QuasarRay/rustlings/blob/main/CHANGELOG.md"
 [[extra.footer_items]]
 name = "MIT License"
-url = "https://github.com/rust-lang/rustlings/blob/main/LICENSE"
+url = "https://github.com/QuasarRay/rustlings/blob/main/LICENSE"

@@ -1,21 +1,22 @@
 +++
 +++
 
-Small exercises to get you used to reading and writing [Rust](https://www.rust-lang.org) code - _Recommended in parallel to reading [the official Rust book](https://doc.rust-lang.org/book) 📚️_
+# Rebuild the Checker
 
-<script src="https://asciinema.org/a/719805.js" id="asciicast-719805" async="true"></script>
+An advanced second Rustlings course: restore the real Rustlings checker through 112 cumulative implementation and bug-fix missions. Finish ordinary Rustlings first.
 
 ## Quick start
 
-```bash
-# Installation
-cargo install rustlings
-# Initialization
-rustlings init
-# Moving into new directory
+Use Rust 1.89 or newer, Cargo, Clippy, rustfmt, Git, and a native linker. Build **this fork**; installing `rustlings` from crates.io selects a different curriculum.
+
+```sh
+git clone https://github.com/QuasarRay/rustlings.git
 cd rustlings
-# Starting Rustlings
-rustlings
+rustup component add clippy rustfmt
+cargo run --locked -- workshop prepare
+cargo run --locked -- --no-editor
 ```
 
-Visit the [**setup**](@/setup/index.md) page for more details 🧰
+Read [setup](@/setup/index.md), then the [learner guide](https://github.com/QuasarRay/rustlings/blob/main/exercises/README.md).
+
+The reference export reproduces the pinned original Rustlings project. Types, imports, helpers and the CLI argument model include supplied scaffold; the course does not ask you to type every line.

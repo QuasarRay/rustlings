@@ -16,8 +16,16 @@ pub fn run(mission: usize, source: &str) {
         .expect("run from the initialized course or its repository");
     let support = root.join("exercises/01_catalog");
     let mut hash = DefaultHasher::new();
-    fs::read(support.join("grader.rs"))
-        .expect("read course verifier")
+    for input in ["grader.rs", "process.rs"] {
+        fs::read(support.join(input))
+            .expect("read course verifier")
+            .hash(&mut hash);
+    }
+    Command::new("rustc")
+        .args(["--version", "--verbose"])
+        .output()
+        .expect("Rust is required")
+        .stdout
         .hash(&mut hash);
     let cache = root.join("target/workshop");
     fs::create_dir_all(&cache).expect("create course build cache");
@@ -70,8 +78,16 @@ pub fn run(mission: usize, source: &str) {
     if let Some(mut stdin) = child.stdin.take() {
         stdin.write_all(source.as_bytes()).expect("send repair");
     }
-    assert!(
-        child.wait().expect("wait for verifier").success(),
-        "mission is still pending; read the verifier's diagnostic above"
-    );
+    let status = child.wait().expect("wait for verifier");
+    if !status.success() {
+        let reason = match status.code() {
+            Some(1) => "REJECTED: repair the mission using the contract failure above",
+            Some(3) => "LOCKED: recheck the named prerequisite before this mission",
+            Some(4) => {
+                "INFRA_TIMEOUT: the check did not judge your repair; retry when resources are available"
+            }
+            _ => "INFRA_ERROR: the verifier could not judge your repair; read the diagnostic above",
+        };
+        panic!("{reason}");
+    }
 }

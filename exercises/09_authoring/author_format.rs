@@ -18,8 +18,26 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
 fn check_exercises(info_file: &'static InfoFile, cmd_runner: &'static CmdRunner) -> Result<()> {
-    // TODO: Implement this operation using the contract above.
-    todo!("author_format")
+    match todo!("author_format") {
+        Ordering::Less => bail!(
+            "`format_version` < {CURRENT_FORMAT_VERSION} (supported version)\n\
+             Please migrate to the latest format version"
+        ),
+        Ordering::Greater => bail!(
+            "`format_version` > {CURRENT_FORMAT_VERSION} (supported version)\n\
+             Try updating the Rustlings program"
+        ),
+        Ordering::Equal => (),
+    }
+
+    let handle = thread::Builder::new()
+        .spawn(move || check_exercises_unsolved(info_file, cmd_runner))
+        .context("Failed to spawn a thread to check if any exercise is already solved")?;
+
+    let info_file_paths = check_info_file_exercises(info_file)?;
+    check_unexpected_files("exercises", &info_file_paths)?;
+
+    handle.join().unwrap()
 }
 // END RUSTLINGS REPAIR
     };

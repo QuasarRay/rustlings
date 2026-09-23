@@ -18,8 +18,26 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
 pub fn list(app_state: &mut AppState) -> Result<()> {
-    // TODO: Implement this operation using the contract above.
-    todo!("list_lifecycle")
+    let mut stdout = io::stdout().lock();
+    stdout
+        .queue(EnterAlternateScreen)?
+        .queue(cursor::Hide)?
+        .queue(DisableLineWrap)?
+        .queue(EnableMouseCapture)?;
+    enable_raw_mode()?;
+
+    let res = todo!("list_lifecycle");
+
+    // Restore the terminal even if we got an error.
+    stdout
+        .queue(LeaveAlternateScreen)?
+        .queue(cursor::Show)?
+        .queue(EnableLineWrap)?
+        .queue(DisableMouseCapture)?
+        .flush()?;
+    disable_raw_mode()?;
+
+    res
 }
 // END RUSTLINGS REPAIR
     };

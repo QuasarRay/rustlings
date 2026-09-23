@@ -1,0 +1,14 @@
+name: Markdown
+on:
+  push:
+    paths: ['**/*.md', '*.md', '.rumdl.toml', '.github/workflows/markdown.yml']
+  pull_request:
+    paths: ['**/*.md', '*.md', '.rumdl.toml', '.github/workflows/markdown.yml']
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: rvben/rumdl@389e12baa4571b7640bb9f0687cf55946da89e4f # v0

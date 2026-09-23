@@ -18,8 +18,28 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     fn sol_path(&self) -> String {
-        // TODO: Implement this operation using the contract above.
-        todo!("solution_paths")
+        let name = self.name();
+
+        let mut path = if let Some(dir) = self.dir() {
+            // 14 = 10 + 1 + 3
+            // solutions/ + / + .rs
+            let mut path = String::with_capacity(14 + dir.len() + name.len());
+            path.push_str("solutions/");
+            todo!("solution_paths");
+            path.push('/');
+            path
+        } else {
+            // 13 = 10 + 3
+            // solutions/ + .rs
+            let mut path = String::with_capacity(13 + name.len());
+            path.push_str("solutions/");
+            path
+        };
+
+        path.push_str(name);
+        path.push_str(".rs");
+
+        path
     }
 // END RUSTLINGS REPAIR
     };

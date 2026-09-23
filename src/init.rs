@@ -159,6 +159,8 @@ pub fn init() -> Result<()> {
     fs::write("Cargo.toml", updated_cargo_toml)
         .context("Failed to create the file `rustlings/Cargo.toml`")?;
 
+    crate::workshop_host::install_lockfile()?;
+
     fs::write("rust-analyzer.toml", RUST_ANALYZER_TOML)
         .context("Failed to create the file `rustlings/rust-analyzer.toml`")?;
 
