@@ -41,6 +41,17 @@ jobs:
           ./target/verifier-tests
       - name: Canonical course validation (cold artifacts)
         run: cargo run --locked -- workshop ${{ matrix.mode }}
+      - name: Preserve reconstruction and behavioral evidence
+        if: ${{ always() && matrix.mode == 'audit' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: course-evidence-${{ matrix.os }}-${{ matrix.rust }}
+          path: |
+            target/workshop/audit.txt
+            target/workshop/mutation-audit.tsv
+            target/workshop/mutation-*.log
+          if-no-files-found: ignore
+          retention-days: 14
   engine-msrv:
     runs-on: ubuntu-latest
     steps:

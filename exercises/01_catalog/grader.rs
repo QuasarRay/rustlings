@@ -587,6 +587,9 @@ impl Workshop {
         Ok(())
     }
     fn mutations(&self, first: usize, last: usize) -> Result<()> {
+        if first == 0 || first > last || last > self.missions.len() {
+            return fail("mutation range must be inside the ordered mission catalog");
+        }
         let baseline: Vec<_> = self.missions.iter().map(|m| self.original(m)).collect();
         let (pass, report) = self.evaluate(&self.base, true)?;
         if !pass {
@@ -595,77 +598,137 @@ impl Workshop {
             ));
         }
         let mut escaped = Vec::new();
-        let mut evidence = String::from("id\tmission\tevidence\n");
+        let mut evidence = String::from("id\tmission\tkind\ttarget\tresult\texecuted_tests\n");
         for m in self
             .missions
             .iter()
             .filter(|m| m.id >= first && m.id <= last)
         {
-            let mut repairs = baseline.clone();
             let original = &baseline[m.id - 1];
-            // These mutants compile without todo! or unimplemented!: they remove
-            // a function's runtime behavior. Value/branch assertions in probes
-            // supplement this minimum check that the function is exercised.
-            repairs[m.id - 1] = if original.contains("const fn") {
-                let mut mutant = original.clone();
+            let mut variants = Vec::new();
+            let mut mutant = original.clone();
+            let marker = format!("WORKSHOP_MUTATION_{}", m.id);
+            if original.contains("const fn") {
                 let value = mutant.rfind("true").ok_or("missing boolean literal")?;
                 mutant.replace_range(value..value + 4, "false");
-                mutant
+                variants.push(("value", mutant));
             } else {
                 let opening = original.find('{').ok_or("missing function body")? + 1;
-                let mut mutant = original.clone();
                 mutant.insert_str(
                     opening,
-                    &format!(
-                        "\nif std::hint::black_box(true) {{ panic!(\"WORKSHOP_MUTATION_{}\"); }}\n",
-                        m.id
-                    ),
+                    &format!("\nif std::hint::black_box(true) {{ panic!(\"{marker}\"); }}\n"),
                 );
-                mutant
-            };
-            let module = m
-                .file
-                .strip_prefix("src/")
-                .unwrap_or_default()
-                .trim_end_matches(".rs")
-                .replace('/', "::")
-                + "::";
-            let filter = if self.probes.contains_key(&m.file) && m.file != "src/main.rs" {
-                Some(module.as_str())
-            } else {
-                None
-            };
-            let files = self.assembled(&repairs)?;
-            let (mut pass, mut report) = self.evaluate_filtered(&files, filter)?;
-            // A function may be covered by integration tests or another module.
-            // The filter is an optimization, never evidence that coverage is absent.
-            if pass && filter.is_some() {
-                (pass, report) = self.evaluate(&files, true)?;
+                variants.push(("reachability", mutant));
             }
-            let behavioral = report.contains("cargo test --locked")
-                || (m.file == "rustlings-macros/src/lib.rs"
-                    && report.contains("WORKSHOP_MUTATION_"));
-            let status = if pass {
-                "ESCAPED"
-            } else if !behavioral {
-                "INVALID_MUTANT"
-            } else {
-                "CAUGHT"
+            // Compiling semantic faults supplement the minimum reachability check.
+            // Each changes a returned value, boundary, predicate or side effect.
+            let semantic = match m.id {
+                1 => Some(("push_str(\"exercises/\")", "push_str(\"solutions/\")")),
+                4 => Some(("push_str(\"solutions/\")", "push_str(\"exercises/\")")),
+                9 => Some((".arg(\"-q\")", ".arg(\"--verbose\")")),
+                17 => Some((
+                    "e.kind() != io::ErrorKind::AlreadyExists",
+                    "e.kind() == io::ErrorKind::AlreadyExists",
+                )),
+                20 => Some(("exercise_files.exercise", "exercise_files.solution")),
+                24 => Some(("as u32 - self.n_done", "as u32 + self.n_done")),
+                28 => Some(("self.n_done += 1", "self.n_done += 2")),
+                34 => Some(("if cfg!(debug_assertions)", "if std::hint::black_box(true)")),
+                41 => Some(("self.len += n", "self.len += n + 1")),
+                49 => Some((
+                    "selected.saturating_sub(max_scroll_padding)",
+                    "selected.saturating_add(max_scroll_padding)",
+                )),
+                54 => Some(("max_n_rows_to_display / 4", "max_n_rows_to_display / 2")),
+                67 => Some(("store(true, Relaxed)", "store(false, Relaxed)")),
+                74 => Some((
+                    "current_exercise_ind() != exercise_ind",
+                    "current_exercise_ind() == exercise_ind",
+                )),
+                75 => Some(("=> true,", "=> false,")),
+                81 => Some(("self.term_width != width", "self.term_width == width")),
+                86 => Some(("|status| status.success()", "|status| !status.success()")),
+                91 => Some(("10 * id", "16 * id")),
+                97 => Some((
+                    "!c.is_alphanumeric() && *c != '_'",
+                    "!c.is_alphanumeric() || *c != '_'",
+                )),
+                98 => Some(("old_bins != new_bins", "old_bins == new_bins")),
+                _ => None,
             };
-            if status != "CAUGHT" {
-                escaped.push(format!("{} {}: {status}", m.id, m.name));
+            if let Some((from, to)) = semantic {
+                if !original.contains(from) {
+                    return fail(format!("mutation anchor changed for {}", m.name));
+                }
+                variants.push(("value", original.replacen(from, to, 1)));
             }
-            evidence.push_str(&format!("{}\t{}\t{}\n", m.id, m.name, status));
-            fs::write(
-                self.cache.join(format!("mutation-{:03}.log", m.id)),
-                &report,
-            )?;
-            println!(
-                "mutation {:03}/{}: {status} — {}",
-                m.id,
-                self.missions.len(),
-                m.name
-            );
+            for (kind, mutant) in variants {
+                let mut repairs = baseline.clone();
+                repairs[m.id - 1] = mutant;
+                let module = m
+                    .file
+                    .strip_prefix("src/")
+                    .unwrap_or_default()
+                    .trim_end_matches(".rs")
+                    .replace('/', "::")
+                    + "::";
+                let filter = if self.probes.contains_key(&m.file) && m.file != "src/main.rs" {
+                    Some(module.as_str())
+                } else {
+                    None
+                };
+                let files = self.assembled(&repairs)?;
+                let (mut pass, mut report) = self.evaluate_filtered(&files, filter)?;
+                // A local filter is only a speed optimization. Integration tests
+                // and another module may be the real caller of this function.
+                if pass && filter.is_some() {
+                    (pass, report) = self.evaluate(&files, true)?;
+                }
+                let ran_tests = report.contains("cargo test --locked");
+                let macro_execution =
+                    m.file == "rustlings-macros/src/lib.rs" && report.contains(&marker);
+                let observed_fault = kind == "value" || report.contains(&marker);
+                let status = if pass {
+                    "ESCAPED"
+                } else if !ran_tests && !macro_execution {
+                    "INVALID_MUTANT"
+                } else if !observed_fault {
+                    "UNOBSERVED_FAILURE"
+                } else {
+                    "CAUGHT"
+                };
+                if status != "CAUGHT" {
+                    escaped.push(format!("{} {} {kind}: {status}", m.id, m.name));
+                }
+                let tests = report
+                    .lines()
+                    .filter_map(|line| {
+                        line.strip_prefix("test ")
+                            .and_then(|line| line.split_once(" ... "))
+                            .map(|(name, _)| name)
+                    })
+                    .collect::<Vec<_>>()
+                    .join(",");
+                let tests = if macro_execution {
+                    "proc_macro_expansion"
+                } else {
+                    &tests
+                };
+                evidence.push_str(&format!(
+                    "{}\t{}\t{kind}\t{}\t{status}\t{tests}\n",
+                    m.id, m.name, m.file
+                ));
+                fs::write(
+                    self.cache.join(format!("mutation-{:03}-{kind}.log", m.id)),
+                    &report,
+                )?;
+                println!(
+                    "mutation {:03}/{} {kind}: {status} — {}",
+                    m.id,
+                    self.missions.len(),
+                    m.name
+                );
+            }
         }
         fs::write(self.cache.join("mutation-audit.tsv"), evidence)?;
         if !escaped.is_empty() {

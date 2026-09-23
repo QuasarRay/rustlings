@@ -44,7 +44,7 @@ The package's existing `rust-version = "1.88"` describes the host engine. `[pack
 2. Read the provided context and predict the failure. You are repairing application behavior, not relearning Rust syntax.
 3. Edit the Rust between `BEGIN RUSTLINGS REPAIR` and `END RUSTLINGS REPAIR`. Keep the markers, adapter, and test intact.
 4. Save. Rustlings builds the exercise, runs its test, runs Clippy, and executes it. The additive course command policy bounds compiler concurrency and accommodates cold builds. The exercise asks the course verifier to check the actual reconstructed Rustlings source.
-5. Use `h` for a three-stage hint, `r` to retry, `l` for the mission map, and `n` after completion. `x` resets the current mission.
+5. Use `h` for the first hint (request later levels separately), `r` to retry, `l` for the mission map, and `n` after completion. `x` resets the current mission.
 6. Earlier repairs are included in every later build. Editing or resetting an earlier mission invalidates its completion evidence; recheck from that mission onward.
 
 A mission is cleared by compilation and regression evidence. There is no `completed = true` flag to edit. Like ordinary Rustlings, the course is an open learning environment, not a tamper-resistant exam: changing tests, the verifier, caches, or solution fixtures is outside the exercise contract.
@@ -93,6 +93,10 @@ See [architecture description record](01_catalog/architecture.md).
 ## Maintainer validation
 
 See [maintainer validation](01_catalog/maintenance.md).
+
+## Audit review
+
+See the [audit review and remediation record](01_catalog/audit-review.md).
 
 ## Source map
 

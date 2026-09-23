@@ -1,6 +1,6 @@
 # Architecture description record
 
-**Record:** AD-001, Rebuild the Checker. **Revision:** 1. **Status:** implemented course design. **Date:** 2026-09-23. **Owner:** fork maintainers. **Baseline:** the commit above. **Audience:** learners, course authors, maintainers, and reviewers.
+**Record:** AD-001, Rebuild the Checker. **Revision:** 2. **Status:** implemented course design. **Date:** 2026-09-23. **Owner:** fork maintainers. **Baseline:** original engine `a650509c789da1656f813392b16aa1fa043b7f3e`, course audit starting at `1b871b5706c358ab9d31337f2e3dec3a493dbc0d`. **Audience:** learners, course authors, maintainers, and reviewers.
 
 This record uses the architecture-description concepts of [ISO/IEC/IEEE 42010:2022](https://www.iso.org/standard/74393.html): an entity of interest, stakeholders and concerns, viewpoints, views, model kinds, correspondences, and decision rationale. It is an ISO-aligned project record, not a claim of independently audited conformance to every clause of the paid standard.
 
@@ -16,7 +16,7 @@ The existing host engine owns exercise order, UI, hints, build/test/lint/run gat
 | --- | --- | --- | --- |
 | Learner | Understand, implement, diagnose | C1 progression; C2 actionable feedback; C3 manageable tasks | Named missions, local contracts, hints, cumulative evidence, and clear source mapping. |
 | Course author | Reuse the architecture for another subject | C4 author validation; C5 domain transfer | Independent failing-starter tests, passing solutions, and authoring-tool practice. |
-| Maintainer | Preserve compatibility and fidelity | C6 engine preservation; C7 reproducibility; C8 cost | Unchanged existing engine source, pinned dependencies, inspectable mapping, incremental build caching. |
+| Maintainer | Preserve compatibility and fidelity | C6 engine preservation; C7 reproducibility; C8 cost | Preserved engine algorithms, additive course hooks, pinned dependencies, inspectable mapping, incremental build caching. |
 | Reviewer | Audit the resulting product | C9 traceability; C10 honest evidence | Source ranges, exact reference reconstruction, test reports, and explicit untested boundaries. |
 | Upstream Rustlings contributors | Preserve provenance | C11 attribution and scope | Original license and implementation retained; no invented replacement runner. |
 
@@ -65,7 +65,7 @@ flowchart TD
     J["Additional contract probes"] --> E
 ```
 
-The host's success contract remains build → optional tests → Clippy → execution. The course's execution performs another real Rustlings build and regression suite. There is one serialized compiler workspace per initialized course; cached reports avoid repeating equivalent checks. Cache hits require equality of the complete serialized source input, not just equality of a hash. Verifier, probe, registry, snapshot, and toolchain identity changes invalidate evidence.
+The host's success contract remains build → optional tests → Clippy → execution. The course's execution performs another real Rustlings build and regression suite. There is one serialized compiler workspace per initialized course; cached reports avoid repeating equivalent checks. Cache hits require equality of the complete serialized source input, not just equality of a hash. Verifier, probe, registry, snapshot, toolchain, platform, build environment, and Cargo configuration changes invalidate evidence. A 600-second course host command encloses the verifier's single 540-second budget for queueing, Clippy, debug tests, and the focused release test. Timeout cleanup owns descendant processes. The original policy is preserved in ordinary courses and the exported target.
 
 The test snapshot preserves original production source except for learner replacements. Additional test modules are appended under `cfg(test)` and never appear in the export. Disposable check builds also add standalone workspace declarations to the two excluded exercise manifests, preventing an enclosing course workspace from capturing them. These boundary declarations are not exported. The original engine dependencies and Cargo.lock remain the compiler environment.
 
@@ -99,7 +99,7 @@ The final export writes only to a previously nonexistent destination. It contain
 | CR4 | Mission N pass ↔ same certified repairs 1…N−1 | Cumulative prefix receipts |
 | CR5 | Every starter defect ↔ independently failing reconstructed project | Audit inserts one starter into otherwise correct source |
 | CR6 | Export ↔ actual cumulative learner repairs | Fresh composition and regression check; no reference substitution |
-| CR7 | Claimed behavior ↔ named tests or stated manual limit | Validation record and limitations below |
+| CR7 | Claimed behavior ↔ named tests or stated manual limit | Per-mission mutation evidence, validation record and limitations below |
 | CR8 | Engine preservation ↔ byte-identical reference archive and export | Git scope review before publication |
 
 ## Decisions and rationale
@@ -111,7 +111,7 @@ The final export writes only to a previously nonexistent destination. It contain
 | D3: Use disjoint cumulative repairs | Earlier work must contribute to later work. | Resetting an early repair can relock later missions. |
 | D4: Preserve small supplied scaffolds | Requiring every import/accessor to be retyped adds effort without architectural learning. | Coverage distinguishes repaired functions from supplied wiring. |
 | D5: Grade execution, not source-string equality | Different valid implementations should be testable. | Exact identity is established for the reference reconstruction; universal semantic equivalence is not claimed. |
-| D6: Audit starters independently | Prerequisite failures can conceal a solved or ineffective later exercise. | CI runs an additional mutation audit before the normal author gate. |
+| D6: Separate starter rejection from behavioral mutation checks | Prerequisite failures and TODO lint failures can conceal missing contract coverage. | CI independently rejects each starter and requires compiling negative examples with named test evidence before the native author gate. |
 | D7: Cache complete verified inputs | Rebuilding the whole checker on every unchanged rerun is wasteful. | Cache identity and recovery are explicit, inspectable course infrastructure. |
 | D8: Keep reflection unscored | Architecture explanation requires judgment beyond compiler success. | Transfer prompts complement rather than replace automatic repair checks. |
 
@@ -128,3 +128,7 @@ The source archive, registry, and original dependency lockfile define this recor
 The 112 repair ranges cover 24 of the 25 engine Rust files and 111,994 of 154,540 source bytes (72.5%). Imports, types, helpers, tests, and the complete `src/cli.rs` argument model are supplied scaffold. Read that CLI model alongside the launch-dispatch mission; its definitions connect options to the runtime boundary. Module exposure and source coverage are not measures of behavioral mastery. The grader accepts the behaviors its tests exercise; it does not prove universal equivalence.
 
 The host fork adds a course-specific subprocess policy and maintenance command. Those additions are outside the pinned learner target and are not exported. The original engine paths remain available for ordinary courses.
+
+## Revision 2 evaluation record
+
+The [audit review](audit-review.md) maps every finding to evidence, remediation, or a justified boundary. The [maintenance guide](maintenance.md) defines the current cold-build, debug/release, cross-platform and mutation gates. These replace the earlier warm-cache assumption while retaining the original target. Active gaps are at most 16 reference lines, and optional hints are revealed in three stages. The release gate and CI use the same portable driver.

@@ -3,13 +3,24 @@
 From a repository checkout:
 
 ```sh
-bash exercises/01_catalog/audit.sh
-cargo dev check --require-solutions
-cargo test --locked --workspace
-cargo fmt --all --check
+cargo run --locked -- workshop audit
 ```
 
-The canonical command is `cargo run --locked -- workshop audit`. It checks the real baseline, every isolated starter defect, exact reference reconstruction, workspace tests, and the native author gate. Compiler concurrency is bounded by the course host policy; warm artifacts are an optimization. Results are written under `target/workshop/audit.txt`. The release hook calls the same Rust driver.
+The canonical command checks the real baseline, every isolated starter defect, exact reference reconstruction, compiling mutations, workspace tests, and the native author gate. Compiler concurrency is bounded by the course host policy; warm artifacts are an optimization. The release hook calls the same Rust driver. The Bash script is an optional shortcut.
+
+For a quick environment/reference check use `workshop prepare`; for a platform and export check use `workshop smoke`. During a focused test change use `workshop mutations FIRST LAST`, with inclusive mission IDs. The full gate remains required before release. It costs more than a single learner check because it intentionally rebuilds independent wrong implementations; run it once after a coherent change rather than after every editor save.
+
+Reports under `target/workshop` distinguish three claims:
+
+| Report | Evidence and limits |
+| --- | --- |
+| `audit.txt` | All 112 isolated starters fail, all reference repairs pass, and all 266 archived files reconstruct exactly. A TODO lint failure alone establishes no behavioral coverage. |
+| `mutation-audit.tsv` | Mission, source file, fault kind, outcome, and executed test names. Every mission has a compiling runtime-fault check (or a changed constant); 19 also have wrong-value, boundary, predicate, or side-effect mutations. The procedural macro is observed at compile time. |
+| `mutation-NNN-KIND.log` | Commands and raw diagnostics for that individual mutation. `CAUGHT` requires a test failure after successful Clippy, or the expected procedural-macro panic. Runtime-fault evidence must contain that mission's marker. |
+
+`ESCAPED`, `INVALID_MUTANT`, and `UNOBSERVED_FAILURE` fail the author gate. A module filter only saves work: a mutation that survives it is checked against the complete integration suite before being classified as escaped. Filtered results cannot certify a learner repair. These 131 mutations establish a minimum set of negative examples, not exhaustive semantic equivalence. Assertions in `probes.txt` cover values and transitions; live terminal/editor versions still need appropriate manual checks.
+
+Normal grading also runs the focused release-profile solution-visibility test, because the original function deliberately returns early in debug builds.
 
 Do not run the author audit against a learner's edited starter set: its purpose is to prove the published starters remain unsolved. Use normal Rustlings checks for learner work.
 

@@ -79,6 +79,7 @@ fn grader() -> Result<PathBuf> {
 
 fn audit(binary: &PathBuf) -> Result<()> {
     run(Command::new(binary).args([".", "audit"]))?;
+    run(Command::new(binary).args([".", "mutations"]))?;
     run(Command::new("cargo").args(["test", "--locked", "--workspace"]))?;
     run(Command::new("cargo").args([
         "run",
@@ -146,6 +147,11 @@ fn main() -> Result<()> {
             );
         }
         "audit" => audit(&binary)?,
+        "mutations" => {
+            run(Command::new(&binary)
+                .args([".", "mutations"])
+                .args(std::env::args().skip(2)))?;
+        }
         "smoke" => {
             run(Command::new(&binary).args([".", "prepare"]))?;
             let (status, output) = process::capture(
@@ -207,7 +213,7 @@ fn main() -> Result<()> {
         }
         _ => {
             return Err(
-                "usage: course doctor|info|hint MISSION [LEVEL]|prepare|audit|smoke|release".into(),
+                "usage: course doctor|info|hint MISSION [LEVEL]|prepare|audit|mutations [FIRST LAST]|smoke|release".into(),
             );
         }
     }

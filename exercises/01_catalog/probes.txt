@@ -169,7 +169,7 @@ mod workshop_author_dispatch_contracts {
 }
 
 
-src/dev/check.rs	3525
+src/dev/check.rs	3529
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -222,14 +222,12 @@ mod workshop_author_gate_contracts {
     #[test]
     fn unsolved_format_and_solution_checks_accept_and_reject_real_programs() {
         let (_cwd, info, runner) = fixture();
-        check_exercises_unsolved(info, runner).unwrap();
-        check_exercises(info, runner).unwrap();
-        check_solutions(true, info, runner).unwrap();
+        // The composed gate includes the positive unsolved/format/solution checks.
         check(true).unwrap();
         fs::write("exercises/quest.rs", "// TODO: already solved\nfn main() {}\n#[test] fn result() { assert_eq!(2, 2); }\n").unwrap();
-        assert!(check_exercises_unsolved(info, runner).is_err());
+        assert!(check_exercises_unsolved(info, runner).unwrap_err().to_string().contains("already solved"));
         fs::remove_file("solutions/quest.rs").unwrap();
-        assert!(check_solutions(true, info, runner).is_err());
+        assert!(check_solutions(true, info, runner).unwrap_err().to_string().contains("missing"));
         check_solutions(false, info, runner).unwrap();
         let mut invalid = InfoFile::parse().unwrap(); invalid.format_version = 0;
         assert!(check_exercises(Box::leak(Box::new(invalid)), runner).is_err());
@@ -279,7 +277,7 @@ mod workshop_author_update_contracts {
 }
 
 
-src/editor.rs	1392
+src/editor.rs	3948
 
 
 #[cfg(test)]
@@ -307,6 +305,52 @@ mod workshop_editor_contracts {
     }
 }
 
+
+#[cfg(test)]
+mod workshop_zellij_process_contracts {
+    use super::*;
+    #[test]
+    fn pane_queries_reuse_and_close_real_child_processes() {
+        if std::env::var_os("WORKSHOP_FAKE_ZELLIJ_CHILD").is_some() {
+            assert!(zellij::pane_open(17).unwrap());
+            assert!(!zellij::pane_open(99).unwrap());
+            let editor = Editor::Zellij(None).open(0, "alpha.rs").unwrap().join().unwrap().unwrap();
+            let editor = editor.open(0, "alpha.rs").unwrap().join().unwrap().unwrap();
+            let mut editor = editor.open(1, "beta.rs").unwrap().join().unwrap().unwrap();
+            editor.close().unwrap();
+            return;
+        }
+        let fixture = tempfile::tempdir().unwrap();
+        let src = fixture.path().join("zellij.rs");
+        std::fs::write(&src, r##"
+use std::{env,fs::OpenOptions,io::Write};
+fn main() {
+    let args:Vec<_>=env::args().skip(1).collect();
+    let mut log=OpenOptions::new().create(true).append(true).open(env::var_os("WORKSHOP_ZELLIJ_LOG").unwrap()).unwrap();
+    writeln!(log,"{}",args.join(" ")).unwrap();
+    match args.get(1).map(String::as_str) {
+        Some("list-panes")=>println!("[{{\"id\":17}}]"),
+        Some("edit")=>println!("terminal_17"),
+        Some("close-pane")=>(),
+        _=>std::process::exit(2),
+    }
+}
+"##).unwrap();
+        let compiled = Command::new("rustc").arg("--edition=2024").arg(&src).arg("--out-dir").arg(fixture.path()).output().unwrap();
+        assert!(compiled.status.success(), "{}", String::from_utf8_lossy(&compiled.stderr));
+        let mut paths = vec![fixture.path().to_path_buf()];
+        paths.extend(std::env::split_paths(&std::env::var_os("PATH").unwrap()));
+        let log = fixture.path().join("calls.txt");
+        let output = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "editor::workshop_zellij_process_contracts::pane_queries_reuse_and_close_real_child_processes", "--nocapture"])
+            .env("WORKSHOP_FAKE_ZELLIJ_CHILD", "1")
+            .env("WORKSHOP_ZELLIJ_LOG", &log)
+            .env("PATH", std::env::join_paths(paths).unwrap()).output().unwrap();
+        assert!(output.status.success(), "{}\n{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        let calls = std::fs::read_to_string(log).unwrap();
+        assert_eq!(calls.lines().collect::<Vec<_>>(), ["action list-panes -j", "action list-panes -j", "action edit alpha.rs", "action list-panes -j", "action close-pane -p 17", "action edit beta.rs", "action close-pane -p 17"]);
+    }
+}
 
 src/editor/zellij.rs	296
 
@@ -616,7 +660,7 @@ mod workshop_terminal_contracts {
 }
 
 
-src/watch.rs	306
+src/watch.rs	2181
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -629,6 +673,42 @@ fn pause_guard_suppresses_events_and_resumes_on_drop() {
     assert!(!EXERCISE_RUNNING.load(Relaxed));
 }
 
+}
+
+// Test-only OS boundary: capture terminal mode changes without requiring a TTY.
+#[cfg(all(test, not(windows)))]
+mod rustix {
+    pub use ::rustix::stdio;
+    pub mod termios {
+        pub use ::rustix::termios::{LocalModes, OptionalActions};
+        pub struct Termios { pub local_modes: LocalModes }
+        pub static MODES: std::sync::Mutex<Vec<LocalModes>> = std::sync::Mutex::new(Vec::new());
+        pub fn tcgetattr<T>(_: T) -> std::io::Result<Termios> { Ok(Termios { local_modes: LocalModes::ICANON | LocalModes::ECHO }) }
+        pub fn tcsetattr<T>(_: T, _: OptionalActions, value: &Termios) -> std::io::Result<()> { MODES.lock().unwrap().push(value.local_modes); Ok(()) }
+    }
+}
+#[cfg(test)]
+mod workshop_watch_loop_contracts {
+    use super::*;
+    #[test]
+    fn dispatch_and_terminal_lifecycle_handle_exit_list_and_listener_failure() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok")], String::new(), None, false).unwrap();
+        terminal_event::workshop_final_key(b'l');
+        assert!(matches!(run_watch(&mut app, None).unwrap(), WatchExit::List));
+        terminal_event::workshop_final_key(b'q');
+        watch_list_loop(&mut app, None).unwrap();
+        #[cfg(not(windows))] rustix::termios::MODES.lock().unwrap().clear();
+        watch(&mut app, None).unwrap();
+        terminal_event::workshop_final_key(0);
+        assert!(watch(&mut app, None).unwrap_err().to_string().contains("Terminal event listener failed"));
+        #[cfg(not(windows))] {
+            use super::rustix::termios::LocalModes;
+            let modes = rustix::termios::MODES.lock().unwrap();
+            let original = LocalModes::ICANON | LocalModes::ECHO;
+            assert_eq!(*modes, [LocalModes::empty(), original, LocalModes::empty(), original]);
+        }
+    }
 }
 
 src/watch/notify_event.rs	628
@@ -649,7 +729,7 @@ fn a_rust_source_change_reaches_the_correct_mission() {
 
 }
 
-src/watch/state.rs	594
+src/watch/state.rs	3936
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -665,7 +745,66 @@ fn only_completed_statuses_allow_advancing() {
 
 }
 
-src/watch/terminal_event.rs	1798
+#[cfg(test)]
+mod crossterm {
+    pub use ::crossterm::*;
+    pub mod terminal {
+        pub fn size() -> ::std::io::Result<(u16, u16)> { Ok((80, 24)) }
+    }
+}
+#[cfg(test)]
+mod std {
+    pub use ::std::*;
+    pub mod io {
+        pub use ::std::io::*;
+        pub static ANSWERS: ::std::sync::Mutex<::std::collections::VecDeque<u8>> = ::std::sync::Mutex::new(::std::collections::VecDeque::new());
+        pub struct ScriptInput;
+        pub fn stdin() -> ScriptInput { ScriptInput }
+        impl ScriptInput { pub fn lock(self) -> Self { self } }
+        impl Read for ScriptInput {
+            fn read(&mut self, out: &mut [u8]) -> Result<usize> {
+                let mut input = ANSWERS.lock().unwrap(); let mut n = 0;
+                while n < out.len() { let Some(byte) = input.pop_front() else { break }; out[n] = byte; n += 1; }
+                Ok(n)
+            }
+        }
+    }
+}
+#[cfg(test)]
+mod workshop_state_machine_contracts {
+    use super::*;
+    #[test]
+    fn run_change_hint_resize_and_advance_follow_actual_check_results() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok"), crate::workshop_test_support::info("probe_compile")], String::new(), None, false).unwrap();
+        let (tx, rx) = std::sync::mpsc::channel();
+        let mut state = WatchState::build(&mut app, tx, true).unwrap();
+        assert!(matches!(rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(), WatchEvent::TerminalEventErr(_)));
+        assert_eq!(state.term_width, 80); assert!(!state.done());
+        let mut stdout = io::stdout().lock();
+        assert!(matches!(state.next_exercise(&mut stdout).unwrap(), ExercisesProgress::CurrentPending));
+        state.run_current_exercise(&mut stdout).unwrap(); assert!(state.done());
+        assert!(!crate::watch::EXERCISE_RUNNING.load(std::sync::atomic::Ordering::Relaxed));
+        state.show_hint(&mut stdout).unwrap(); assert!(state.show_hint);
+        state.show_hint(&mut stdout).unwrap();
+        state.update_term_width(101, &mut stdout).unwrap(); assert_eq!(state.term_width, 101);
+        state.update_term_width(101, &mut stdout).unwrap();
+        let before = state.output.clone(); state.handle_file_change(1, &mut stdout).unwrap(); assert_eq!(state.output, before);
+        assert!(matches!(state.next_exercise(&mut stdout).unwrap(), ExercisesProgress::NewPending));
+        assert_eq!(state.app_state.current_exercise_ind(), 1);
+        state.handle_file_change(1, &mut stdout).unwrap(); assert!(!state.done()); assert!(!state.show_hint);
+        assert!(matches!(state.check_all_exercises(&mut stdout).unwrap(), ExercisesProgress::CurrentPending));
+        std::fs::write("exercises/probe_compile.rs", "fn main() {}\n").unwrap();
+        assert!(matches!(state.check_all_exercises(&mut stdout).unwrap(), ExercisesProgress::AllDone));
+        let (resume, received) = std::sync::mpsc::sync_channel(1); state.terminal_event_unpause_sender = resume;
+        *io::ANSWERS.lock().unwrap() = (*b"?n").into();
+        state.reset_exercise(&mut stdout).unwrap(); received.try_recv().unwrap();
+        assert_eq!(state.app_state.n_pending(), 0, "cancel must preserve progress");
+        io::ANSWERS.lock().unwrap().clear(); assert!(state.reset_exercise(&mut stdout).is_err());
+    }
+}
+
+src/watch/terminal_event.rs	2539
 
 
 #[cfg(test)]
@@ -673,7 +812,17 @@ mod crossterm {
     pub mod event {
         pub use ::crossterm::event::*;
         pub static EVENTS: std::sync::Mutex<std::collections::VecDeque<Event>>=std::sync::Mutex::new(std::collections::VecDeque::new());
-        pub fn read()->std::io::Result<Event> {EVENTS.lock().unwrap().pop_front().ok_or_else(||std::io::Error::other("script exhausted"))}
+        pub static FINAL_KEY: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(0);
+        pub fn read()->std::io::Result<Event> {
+            use std::sync::atomic::Ordering::Relaxed;
+            let final_key = FINAL_KEY.load(Relaxed);
+            if final_key != 0 {
+                while crate::watch::EXERCISE_RUNNING.load(Relaxed) { std::thread::yield_now(); }
+            }
+            if let Some(event) = EVENTS.lock().unwrap().pop_front() { return Ok(event); }
+            if final_key != 0 { return Ok(Event::Key(KeyEvent::new(KeyCode::Char(char::from(final_key)), KeyModifiers::NONE))); }
+            Err(std::io::Error::other("script exhausted"))
+        }
     }
 }
 #[cfg(test)]
@@ -696,4 +845,10 @@ mod workshop_input_contracts {
     }
 }
 
+
+#[cfg(test)]
+pub(super) fn workshop_final_key(key: u8) {
+    crossterm::event::EVENTS.lock().unwrap().clear();
+    crossterm::event::FINAL_KEY.store(key, std::sync::atomic::Ordering::Relaxed);
+}
 
