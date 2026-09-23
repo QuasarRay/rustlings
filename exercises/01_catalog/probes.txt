@@ -169,7 +169,7 @@ mod workshop_author_dispatch_contracts {
 }
 
 
-src/dev/check.rs	311
+src/dev/check.rs	3525
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -181,6 +181,59 @@ fn author_names_allow_letters_numbers_and_underscores() {
     assert_eq!(forbidden_char("bad-name"),Some('-'));assert_eq!(forbidden_char("bad name"),Some(' '));
 }
 
+}
+
+#[cfg(test)]
+mod workshop_author_gate_contracts {
+    use super::*;
+    fn fixture() -> (crate::workshop_test_support::Cwd, &'static InfoFile, &'static CmdRunner) {
+        let cwd = crate::workshop_test_support::cwd(false);
+        fs::create_dir("exercises").unwrap(); fs::create_dir("solutions").unwrap(); fs::create_dir("dev").unwrap();
+        fs::write("info.toml", "format_version=1\n[[exercises]]\nname='quest'\nhint='Restore the result'\n").unwrap();
+        fs::write("exercises/quest.rs", "// TODO: restore\nfn main() { missing_answer(); }\n#[test] fn result() { assert_eq!(2, 3); }\n").unwrap();
+        fs::write("solutions/quest.rs", "fn main() {}\n\n#[test]\nfn result() {\n    assert_eq!(2, 2);\n}\n").unwrap();
+        let info = Box::leak(Box::new(InfoFile::parse().unwrap()));
+        for (path, prefix) in [("Cargo.toml", &b""[..]), ("dev/Cargo.toml", &b"../"[..])] {
+            let mut manifest = b"bin = [".to_vec();
+            append_bins(&mut manifest, &info.exercises, prefix);
+            manifest.extend_from_slice(b"]\n[package]\nname='author_fixture'\nversion='0.0.0'\nedition='2024'\n");
+            fs::write(path, manifest).unwrap();
+        }
+        let runner = Box::leak(Box::new(CmdRunner::build().unwrap()));
+        (cwd, info, runner)
+    }
+    #[test]
+    fn manifests_catalogs_and_inventory_enforce_the_author_contract() {
+        let (_cwd, info, _) = fixture();
+        check_cargo_toml(&info.exercises, "dev/Cargo.toml", b"../").unwrap();
+        assert!(check_cargo_toml(&info.exercises, "dev/Cargo.toml", b"").is_err());
+        let allowed = check_info_file_exercises(info).unwrap();
+        check_unexpected_files("exercises", &allowed).unwrap();
+        fs::write("exercises/unregistered.rs", "fn main() {}\n").unwrap();
+        assert!(check_unexpected_files("exercises", &allowed).is_err());
+        fs::remove_file("exercises/unregistered.rs").unwrap();
+        fs::create_dir_all("exercises/nested/too_deep").unwrap();
+        assert!(check_unexpected_files("exercises", &allowed).is_err());
+        let mut invalid = InfoFile::parse().unwrap(); invalid.exercises[0].hint = "   ".into();
+        assert!(check_info_file_exercises(&invalid).is_err());
+        fs::write("exercises/quest.rs", "fn main() {}\n").unwrap();
+        assert!(check_info_file_exercises(info).is_err());
+    }
+    #[test]
+    fn unsolved_format_and_solution_checks_accept_and_reject_real_programs() {
+        let (_cwd, info, runner) = fixture();
+        check_exercises_unsolved(info, runner).unwrap();
+        check_exercises(info, runner).unwrap();
+        check_solutions(true, info, runner).unwrap();
+        check(true).unwrap();
+        fs::write("exercises/quest.rs", "// TODO: already solved\nfn main() {}\n#[test] fn result() { assert_eq!(2, 2); }\n").unwrap();
+        assert!(check_exercises_unsolved(info, runner).is_err());
+        fs::remove_file("solutions/quest.rs").unwrap();
+        assert!(check_solutions(true, info, runner).is_err());
+        check_solutions(false, info, runner).unwrap();
+        let mut invalid = InfoFile::parse().unwrap(); invalid.format_version = 0;
+        assert!(check_exercises(Box::leak(Box::new(invalid)), runner).is_err());
+    }
 }
 
 src/dev/new.rs	985
