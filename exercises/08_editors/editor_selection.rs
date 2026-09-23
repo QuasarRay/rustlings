@@ -18,8 +18,29 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     pub fn new(cmd: Option<String>, vs_code_term: bool) -> Result<Option<Self>> {
-        // TODO: Implement this operation using the contract above.
-        todo!("editor_selection")
+        if vs_code_term {
+            for program in ["code", "codium"] {
+                if program_exists(program) {
+                    return Ok(Some(Self::Cmd(Cow::Borrowed(program), Vec::new())));
+                }
+            }
+        }
+
+        if let Some(cmd) = cmd {
+            let shlex = &mut Shlex::new(&cmd);
+            let program = todo!("editor_selection");
+            let args = shlex.collect();
+            if shlex.had_error {
+                bail!("Failed to parse the command in `--edit-cmd`");
+            }
+            return Ok(Some(Self::Cmd(Cow::Owned(program), args)));
+        }
+
+        if env::var_os("ZELLIJ").is_some() && program_exists("zellij") {
+            return Ok(Some(Self::Zellij(None)));
+        }
+
+        Ok(None)
     }
 // END RUSTLINGS REPAIR
     };

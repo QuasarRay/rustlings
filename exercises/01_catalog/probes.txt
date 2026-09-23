@@ -1,5 +1,5 @@
 RUSTLINGS_WORKSHOP_V1
-src/app_state.rs	1877
+src/app_state.rs	5814
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -35,7 +35,83 @@ fn pending_search_returns_global_indices_and_wraps() {
 
 }
 
-src/cmd.rs	897
+#[cfg(test)]
+mod workshop_progress_contracts {
+    use super::*;
+    #[test]
+    fn reset_restores_source_and_reverses_completion() {
+        let (_cwd, mut app) = crate::workshop_test_support::app();
+        app.official_exercises = true;
+        for name in ["alpha", "beta"] {
+            std::fs::write(format!("exercises/{name}.rs"), "changed").unwrap();
+        }
+        app.set_status(0, true).unwrap();
+        app.set_status(1, true).unwrap();
+        app.reset_current_exercise().unwrap();
+        assert_eq!(app.n_done(), 1);
+        assert_ne!(std::fs::read_to_string("exercises/alpha.rs").unwrap(), "changed");
+        assert_eq!(app.reset_exercise_by_ind(1).unwrap(), "beta");
+        assert_eq!(app.n_done(), 0);
+        assert_ne!(std::fs::read_to_string("exercises/beta.rs").unwrap(), "changed");
+        assert!(app.reset_exercise_by_ind(3).is_err());
+    }
+    #[test]
+    fn checking_and_final_recheck_persist_actual_results() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok"), crate::workshop_test_support::info("probe_compile")], "Custom finish".into(), None, false).unwrap();
+        let mut stdout = std::io::stdout().lock();
+        assert_eq!(app.check_all_exercises(&mut stdout).unwrap(), Some(1));
+        assert_eq!(app.n_done(), 1);
+        assert!(matches!(app.done_current_exercise::<false>(&mut stdout).unwrap(), ExercisesProgress::NewPending));
+        assert_eq!(app.current_exercise_ind(), 1);
+        assert!(matches!(app.done_current_exercise::<false>(&mut stdout).unwrap(), ExercisesProgress::NewPending));
+        assert_eq!(app.n_done(), 1, "a failing final recheck must revoke completion");
+        std::fs::write("exercises/probe_compile.rs", "fn main() {}\n").unwrap();
+        assert!(matches!(app.done_current_exercise::<false>(&mut stdout).unwrap(), ExercisesProgress::AllDone));
+        assert_eq!(app.n_pending(), 0);
+        let saved = std::fs::read_to_string(STATE_FILE_NAME).unwrap();
+        assert!(saved.lines().any(|line| line == "probe_compile"));
+    }
+    #[test]
+    fn app_editor_ownership_is_restored_after_join() {
+        let (_cwd, mut app) = crate::workshop_test_support::app();
+        let handle = app.open_editor().unwrap();
+        app.join_editor_handle(handle).unwrap();
+        app.close_editor().unwrap();
+        app.editor = Some(crate::editor::Editor::new(Some("rustc --version".into()), false).unwrap().unwrap());
+        let handle = app.open_editor().unwrap();
+        assert!(app.editor.is_none());
+        app.join_editor_handle(handle).unwrap();
+        assert!(app.editor.is_some());
+        app.close_editor().unwrap();
+    }
+}
+#[cfg(test)]
+mod workshop_release_contracts {
+    use super::*;
+    #[test]
+    fn solution_visibility_respects_debug_community_and_embedded_modes() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok")], String::new(), None, false).unwrap();
+        assert!(app.current_solution_path().unwrap().is_none());
+        std::fs::create_dir("solutions").unwrap();
+        std::fs::write("solutions/probe_ok.rs", "fn main() {}\n").unwrap();
+        let path = app.current_solution_path().unwrap();
+        if cfg!(debug_assertions) {
+            assert!(path.is_none());
+        } else {
+            assert_eq!(path.as_deref(), Some("solutions/probe_ok.rs"));
+            drop(app);
+            std::fs::remove_file("info.toml").unwrap();
+            let info: crate::info_file::InfoFile = toml::from_str(EMBEDDED_FILES.info_file).unwrap();
+            let (app, _) = AppState::new(info.exercises, String::new(), None, false).unwrap();
+            let path = app.current_solution_path().unwrap().expect("embedded solution must be revealed");
+            assert!(std::fs::metadata(path).unwrap().len() > 0);
+        }
+    }
+}
+
+src/cmd.rs	1515
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -61,7 +137,39 @@ fn subprocess_nonzero_is_failure_with_or_without_capture() {
 
 }
 
-src/dev/check.rs	311
+#[cfg(test)]
+mod workshop_binary_contracts {
+    use super::*;
+    #[test]
+    fn metadata_locates_the_built_binary_and_missing_binary_is_an_error() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let runner = CmdRunner::build().unwrap();
+        let mut output = Vec::new();
+        assert!(runner.target_dir.is_absolute());
+        assert!(runner.cargo("build", "probe_ok", Some(&mut output)).run("fixture build").unwrap());
+        assert!(runner.run_debug_bin("probe_ok", ".", Some(&mut output)).unwrap());
+        assert!(runner.run_debug_bin("absent_binary", ".", None).is_err());
+    }
+}
+
+src/dev.rs	470
+
+
+#[cfg(test)]
+mod workshop_author_dispatch_contracts {
+    use super::*;
+    #[test]
+    fn debug_new_is_rejected_and_update_errors_reach_the_caller() {
+        let _cwd=crate::workshop_test_support::cwd(false);
+        assert!(DevCommand::New{path:"new".into(),no_git:true}.run().is_err());
+        assert!(!std::path::Path::new("new").exists());
+        std::fs::write("info.toml","broken TOML").unwrap();
+        assert!(DevCommand::Update.run().is_err());
+    }
+}
+
+
+src/dev/check.rs	3525
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -74,6 +182,131 @@ fn author_names_allow_letters_numbers_and_underscores() {
 }
 
 }
+
+#[cfg(test)]
+mod workshop_author_gate_contracts {
+    use super::*;
+    fn fixture() -> (crate::workshop_test_support::Cwd, &'static InfoFile, &'static CmdRunner) {
+        let cwd = crate::workshop_test_support::cwd(false);
+        fs::create_dir("exercises").unwrap(); fs::create_dir("solutions").unwrap(); fs::create_dir("dev").unwrap();
+        fs::write("info.toml", "format_version=1\n[[exercises]]\nname='quest'\nhint='Restore the result'\n").unwrap();
+        fs::write("exercises/quest.rs", "// TODO: restore\nfn main() { missing_answer(); }\n#[test] fn result() { assert_eq!(2, 3); }\n").unwrap();
+        fs::write("solutions/quest.rs", "fn main() {}\n\n#[test]\nfn result() {\n    assert_eq!(2, 2);\n}\n").unwrap();
+        let info = Box::leak(Box::new(InfoFile::parse().unwrap()));
+        for (path, prefix) in [("Cargo.toml", &b""[..]), ("dev/Cargo.toml", &b"../"[..])] {
+            let mut manifest = b"bin = [".to_vec();
+            append_bins(&mut manifest, &info.exercises, prefix);
+            manifest.extend_from_slice(b"]\n[package]\nname='author_fixture'\nversion='0.0.0'\nedition='2024'\n");
+            fs::write(path, manifest).unwrap();
+        }
+        let runner = Box::leak(Box::new(CmdRunner::build().unwrap()));
+        (cwd, info, runner)
+    }
+    #[test]
+    fn manifests_catalogs_and_inventory_enforce_the_author_contract() {
+        let (_cwd, info, _) = fixture();
+        check_cargo_toml(&info.exercises, "dev/Cargo.toml", b"../").unwrap();
+        assert!(check_cargo_toml(&info.exercises, "dev/Cargo.toml", b"").is_err());
+        let allowed = check_info_file_exercises(info).unwrap();
+        check_unexpected_files("exercises", &allowed).unwrap();
+        fs::write("exercises/unregistered.rs", "fn main() {}\n").unwrap();
+        assert!(check_unexpected_files("exercises", &allowed).is_err());
+        fs::remove_file("exercises/unregistered.rs").unwrap();
+        fs::create_dir_all("exercises/nested/too_deep").unwrap();
+        assert!(check_unexpected_files("exercises", &allowed).is_err());
+        let mut invalid = InfoFile::parse().unwrap(); invalid.exercises[0].hint = "   ".into();
+        assert!(check_info_file_exercises(&invalid).is_err());
+        fs::write("exercises/quest.rs", "fn main() {}\n").unwrap();
+        assert!(check_info_file_exercises(info).is_err());
+    }
+    #[test]
+    fn unsolved_format_and_solution_checks_accept_and_reject_real_programs() {
+        let (_cwd, info, runner) = fixture();
+        check_exercises_unsolved(info, runner).unwrap();
+        check_exercises(info, runner).unwrap();
+        check_solutions(true, info, runner).unwrap();
+        check(true).unwrap();
+        fs::write("exercises/quest.rs", "// TODO: already solved\nfn main() {}\n#[test] fn result() { assert_eq!(2, 2); }\n").unwrap();
+        assert!(check_exercises_unsolved(info, runner).is_err());
+        fs::remove_file("solutions/quest.rs").unwrap();
+        assert!(check_solutions(true, info, runner).is_err());
+        check_solutions(false, info, runner).unwrap();
+        let mut invalid = InfoFile::parse().unwrap(); invalid.format_version = 0;
+        assert!(check_exercises(Box::leak(Box::new(invalid)), runner).is_err());
+    }
+}
+
+src/dev/new.rs	985
+
+
+#[cfg(test)]
+mod workshop_author_creation_contracts {
+    use super::*;
+    #[test]
+    fn community_creation_materializes_all_assets_and_rejects_collisions() {
+        let cwd=crate::workshop_test_support::cwd(false);
+        create_rel_dir("occupied",".").unwrap();assert!(create_rel_dir("occupied",".").is_err());
+        write_rel_file("sample",".",b"exact").unwrap();assert_eq!(fs::read("sample").unwrap(),b"exact");
+        assert!(write_rel_file("missing/file",".",b"x").is_err());
+        new(Path::new("course"),true).unwrap();
+        for path in ["info.toml","Cargo.toml","README.md",".gitignore","rust-analyzer.toml",".vscode/extensions.json"] {assert!(Path::new(path).is_file(),"{path}");}
+        assert!(Path::new("exercises").is_dir());assert!(Path::new("solutions").is_dir());assert!(!Path::new(".git").exists());
+        assert!(fs::read_to_string("Cargo.toml").unwrap().contains("bin = []"));
+        assert!(new(Path::new("."),true).is_err());drop(cwd);
+    }
+}
+
+
+src/dev/update.rs	1138
+
+
+#[cfg(test)]
+mod workshop_author_update_contracts {
+    use super::*;
+    #[test]
+    fn updating_changes_only_targets_and_propagates_invalid_input() {
+        let _cwd=crate::workshop_test_support::cwd(false);
+        fs::write("Cargo.toml","bin = []\n[package]\nname = \"preserved\"\n").unwrap();
+        let exercises=vec![crate::workshop_test_support::info("alpha")];
+        update_cargo_toml(&exercises,"Cargo.toml",b"../").unwrap();
+        let text=fs::read_to_string("Cargo.toml").unwrap();assert!(text.contains("../exercises/alpha.rs"));assert!(text.contains("preserved"));
+        fs::write("Cargo.toml","invalid").unwrap();assert!(update_cargo_toml(&exercises,"Cargo.toml",b"").is_err());
+        fs::write("info.toml","format_version=1\n[[exercises]]\nname=\"alpha\"\nhint=\"x\"\n").unwrap();
+        fs::create_dir("dev").unwrap();fs::write("dev/Cargo.toml","bin = []\n[package]\nname = \"x\"\n").unwrap();
+        fs::create_dir("solutions").unwrap();fs::write("solutions/alpha.rs","fn main() {}").unwrap();
+        update().unwrap();assert!(fs::read_to_string("dev/Cargo.toml").unwrap().contains("alpha_sol"));
+    }
+}
+
+
+src/editor.rs	1392
+
+
+#[cfg(test)]
+mod workshop_editor_contracts {
+    use super::*;
+    #[test]
+    fn command_status_discovery_and_quoted_selection() {
+        assert!(program_exists("rustc")); assert!(!program_exists("rustlings_missing_editor_938117"));
+        assert!(!run_cmd(Command::new("rustc").arg("--version")).unwrap().is_empty());
+        assert!(run_cmd(Command::new("rustc").arg("--no-such-rustlings-option")).is_err());
+        let Some(Editor::Cmd(program,args))=Editor::new(Some("editor 'two words' --wait".into()),false).unwrap() else {panic!("expected command editor")};
+        assert_eq!(program,"editor"); assert_eq!(args,["two words","--wait"]);
+        assert!(Editor::new(Some(String::new()),false).is_err());
+        assert!(Editor::new(Some("editor 'unfinished".into()),false).is_err());
+    }
+    #[test]
+    fn asynchronous_open_join_and_optional_close() {
+        assert!(EditorJoinHandle::default().join().unwrap().is_none());
+        let mut editor=Editor::Cmd(Cow::Borrowed("rustc"),vec!["--version".into()]);
+        editor.close().unwrap();
+        let handle=editor.open(0,"exercise.rs").unwrap();assert!(matches!(handle.join().unwrap(),Some(Editor::Cmd(_, _))));
+        let bad=Editor::Cmd(Cow::Borrowed("rustlings_missing_editor_938117"),vec![]);
+        assert!(bad.open(0,"exercise.rs").unwrap().join().is_err());
+        Editor::Zellij(None).close().unwrap();
+    }
+}
+
 
 src/editor/zellij.rs	296
 
@@ -90,7 +323,7 @@ fn pane_ids_are_decimal_not_hexadecimal() {
 
 }
 
-src/embedded.rs	872
+src/embedded.rs	2073
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -114,7 +347,31 @@ fn chapter_readme_and_restored_source_keep_original_paths() {
 
 }
 
-src/exercise.rs	935
+#[cfg(test)]
+mod workshop_materialization_contracts {
+    use super::*;
+    use crate::exercise::RunnableExercise;
+    #[test]
+    fn initialization_and_reveal_materialize_the_embedded_bytes() {
+        let _cwd = crate::workshop_test_support::cwd(false);
+        let info: crate::info_file::InfoFile = toml::from_str(EMBEDDED_FILES.info_file).unwrap();
+        EMBEDDED_FILES.init_exercises_dir(&info.exercises).unwrap();
+        for (i, exercise) in info.exercises.iter().enumerate() {
+            let files = &EMBEDDED_FILES.exercise_files[i];
+            assert_eq!(fs::read(exercise.path()).unwrap(), files.exercise);
+            for input in files.input_files {
+                let path = std::path::PathBuf::from(exercise.path());
+                assert_eq!(fs::read_to_string(path.parent().unwrap().join(input.name)).unwrap(), input.content);
+            }
+        }
+        assert!(EMBEDDED_FILES.init_exercises_dir(&info.exercises).is_err());
+        let path = EMBEDDED_FILES.write_solution_to_disk(0, info.exercises[0].name).unwrap();
+        assert_eq!(path, info.exercises[0].sol_path());
+        assert_eq!(fs::read(&path).unwrap(), EMBEDDED_FILES.exercise_files[0].solution);
+    }
+}
+
+src/exercise.rs	1299
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -133,6 +390,18 @@ fn actual_checker_rejects_compile_test_and_runtime_failures() {
     let mut output=Vec::new();assert!(sample("probe_ok",true).run_solution(Some(&mut output),&runner).unwrap(),"{}",String::from_utf8_lossy(&output));
 }
 
+}
+
+#[cfg(test)]
+mod workshop_path_contracts {
+    use super::*;
+    #[test]
+    fn solution_paths_preserve_optional_chapter() {
+        let mut info = crate::workshop_test_support::info("quest");
+        assert_eq!(info.sol_path(), "solutions/quest.rs");
+        info.dir = Some("chapter");
+        assert_eq!(info.sol_path(), "solutions/chapter/quest.rs");
+    }
 }
 
 src/info_file.rs	1222
@@ -162,6 +431,38 @@ fn local_catalog_is_validated_without_silent_fallback() {
 
 }
 
+src/list.rs	1311
+
+
+#[cfg(test)]
+mod crossterm {
+    pub use ::crossterm::*;
+    pub mod terminal {
+        pub use ::crossterm::terminal::*;
+        pub fn enable_raw_mode()->std::io::Result<()> {Ok(())}
+        pub fn disable_raw_mode()->std::io::Result<()> {Ok(())}
+    }
+    pub mod event {
+        pub use ::crossterm::event::*;
+        pub static EVENTS: std::sync::Mutex<std::collections::VecDeque<Event>>=std::sync::Mutex::new(std::collections::VecDeque::new());
+        pub fn read()->std::io::Result<Event> {EVENTS.lock().unwrap().pop_front().ok_or_else(||std::io::Error::other("script exhausted"))}
+    }
+}
+#[cfg(test)]
+mod workshop_list_event_contracts {
+    use super::*;
+    fn keys(keys:&[char]) { *event::EVENTS.lock().unwrap()=keys.iter().map(|&c|Event::Key(event::KeyEvent::new(KeyCode::Char(c),event::KeyModifiers::NONE))).collect(); }
+    #[test]
+    fn keyboard_continue_commits_selection_and_read_errors_propagate() {
+        let (_cwd,mut app)=crate::workshop_test_support::app();
+        keys(&['j','c']);handle_list(&mut app,&mut io::stdout().lock()).unwrap();assert_eq!(app.current_exercise_ind(),1);
+        keys(&['p','s','g']);assert!(handle_list(&mut app,&mut io::stdout().lock()).is_err());
+        keys(&['q']);list(&mut app).unwrap();
+        keys(&[]);assert!(list(&mut app).is_err());
+    }
+}
+
+
 src/list/scroll_state.rs	841
 
 #[cfg(test)]
@@ -183,6 +484,60 @@ fn resize_and_viewport_preserve_a_valid_visible_selection() {
 }
 
 }
+
+src/list/state.rs	2793
+
+
+#[cfg(test)]
+mod crossterm {
+    pub use ::crossterm::*;
+    pub mod terminal {
+        pub use ::crossterm::terminal::*;
+        pub fn size()->std::io::Result<(u16,u16)> {Ok((80,24))}
+    }
+}
+#[cfg(test)]
+mod workshop_list_contracts {
+    use super::*;
+    #[test]
+    fn filtering_search_and_selection_map_to_original_indices() {
+        let (_cwd,mut app)=crate::workshop_test_support::app();
+        app.set_status(1,true).unwrap();
+        let mut out=io::stdout().lock();
+        let mut state=ListState::build(&mut app,&mut out).unwrap();
+        assert_eq!((state.term_width,state.term_height),(80,24));
+        state.set_filter(Filter::Done);
+        assert_eq!(state.selected_to_exercise_ind(0).unwrap(),1);
+        assert!(state.selected_to_exercise_ind(1).is_err());
+        state.search_query="beta".into(); state.apply_search_query();
+        assert_eq!(state.scroll_state.selected(),Some(0));
+        assert!(state.selected_to_current_exercise().unwrap());
+        assert_eq!(state.app_state.current_exercise_ind(),1);
+        state.set_filter(Filter::Pending);
+        assert_eq!(state.selected_to_exercise_ind(0).unwrap(),0);
+        assert_eq!(state.selected_to_exercise_ind(1).unwrap(),2);
+        state.search_query="gamma".into();state.apply_search_query();assert_eq!(state.scroll_state.selected(),Some(1));
+        state.search_query="absent".into();state.apply_search_query();assert!(state.message.contains("not found"));
+        state.set_term_size(10,2);assert!(!state.show_footer);assert_eq!(state.scroll_state.max_n_rows_to_display(),1);
+        state.draw(&mut out).unwrap();
+        state.set_term_size(80,24);assert!(state.show_footer);state.draw(&mut out).unwrap();
+        state.set_term_size(0,0);state.draw(&mut out).unwrap();
+    }
+    #[test]
+    fn empty_filter_never_selects_or_resets_an_unrelated_exercise() {
+        let (_cwd,mut app)=crate::workshop_test_support::app();let mut out=io::stdout().lock();
+        let mut state=ListState::build(&mut app,&mut out).unwrap();state.set_filter(Filter::Done);
+        assert!(state.scroll_state.selected().is_none());
+        assert!(!state.selected_to_current_exercise().unwrap());state.reset_selected().unwrap();
+        assert!(state.message.contains("Nothing selected"));assert_eq!(state.app_state.n_done(),0);
+        state.set_filter(Filter::None);state.select_last();assert_eq!(state.scroll_state.selected(),Some(2));
+        state.select_first();state.select_next();assert_eq!(state.scroll_state.selected(),Some(1));
+        state.select_previous();assert_eq!(state.scroll_state.selected(),Some(0));
+        state.search_query="al".into();state.draw(&mut out).unwrap();
+        let rows=state.draw_rows(&mut out,state.app_state.exercises().iter().enumerate()).unwrap();assert_eq!(rows,3);
+    }
+}
+
 
 src/main.rs	2305
 
@@ -222,6 +577,44 @@ mod workshop_test_support {
         (cwd,state)
     }
 }
+
+src/term.rs	1824
+
+
+#[cfg(test)]
+mod workshop_terminal_contracts {
+    use super::*;
+    #[test]
+    fn bounded_ascii_unicode_and_reserved_width() {
+        let mut out=io::stdout().lock();
+        let mut w=MaxLenWriter::new(&mut out,3);
+        w.write_ascii(b"abcd").unwrap(); assert_eq!(w.len,3);
+        w.write_ascii(b"overflow").unwrap(); assert_eq!(w.len,3);
+        let mut w=MaxLenWriter::new(&mut out,2);
+        w.write_str("λ").unwrap(); assert_eq!(w.len,1);
+        w.add_to_len(1); w.write_str("overflow").unwrap(); assert_eq!(w.len,2);
+        let mut zero=MaxLenWriter::new(&mut out,0);
+        zero.write_ascii(b"x").unwrap(); zero.write_str("λ").unwrap(); assert_eq!(zero.len,0);
+    }
+    #[test]
+    fn progress_count_paths_links_and_ansi_preserve_contracts() {
+        let cwd=crate::workshop_test_support::cwd(false);
+        fs::write("present.rs","x").unwrap();
+        assert!(canonicalize("present.rs").unwrap().ends_with("present.rs"));
+        assert!(canonicalize("absent.rs").is_none());
+        let mut out=io::stdout().lock();
+        {let mut c=ProgressCounter::new(&mut out,2).unwrap();c.increment().unwrap();assert_eq!((c.counter,c.total),(1,2));}
+        let mut w=MaxLenWriter::new(&mut out,80);
+        progress_bar(&mut w,1,3,8).unwrap(); assert_eq!(w.len,13);
+        progress_bar(&mut w,0,3,80).unwrap(); progress_bar(&mut w,3,3,80).unwrap();
+        let mut called=false; file_path(&mut w,Color::Green,|_| {called=true;Ok(())}).unwrap(); assert!(called);
+        assert!(file_path(&mut w,Color::Green,|_| Err(io::Error::other("write failed"))).is_err());
+        let before=w.len; terminal_file_link(&mut w,"visible","/tmp/target.rs").unwrap();assert_eq!(w.len,before+7);
+        let mut ansi=Vec::new();write_ansi(&mut ansi,MoveTo(0,0));assert_eq!(ansi,b"\x1b[1;1H");
+        drop(cwd);
+    }
+}
+
 
 src/watch.rs	306
 
@@ -271,4 +664,36 @@ fn only_completed_statuses_allow_advancing() {
 }
 
 }
+
+src/watch/terminal_event.rs	1798
+
+
+#[cfg(test)]
+mod crossterm {
+    pub mod event {
+        pub use ::crossterm::event::*;
+        pub static EVENTS: std::sync::Mutex<std::collections::VecDeque<Event>>=std::sync::Mutex::new(std::collections::VecDeque::new());
+        pub fn read()->std::io::Result<Event> {EVENTS.lock().unwrap().pop_front().ok_or_else(||std::io::Error::other("script exhausted"))}
+    }
+}
+#[cfg(test)]
+mod workshop_input_contracts {
+    use super::*;
+    #[test]
+    fn terminal_events_honor_manual_mode_pause_and_final_transition() {
+        use std::sync::mpsc::channel;
+        let key=|c|Event::Key(event::KeyEvent::new(KeyCode::Char(c),event::KeyModifiers::NONE));
+        *event::EVENTS.lock().unwrap()=[key('r'),key('x'),Event::Resize(90,20),key('n'),key('q')].into();
+        let (tx,rx)=channel();let (resume,paused)=channel();resume.send(()).unwrap();
+        EXERCISE_RUNNING.store(false,Relaxed);terminal_event_handler(tx,paused,true);
+        let events:Vec<_>=rx.try_iter().collect();
+        assert!(matches!(events.as_slice(),[WatchEvent::Input(InputEvent::Run),WatchEvent::Input(InputEvent::Reset),WatchEvent::TerminalResize{width:90},WatchEvent::Input(InputEvent::Next),WatchEvent::Input(InputEvent::Quit)]));
+        *event::EVENTS.lock().unwrap()=[key('r'),key('l')].into();let(tx,rx)=channel();let(_tx,paused)=channel();
+        terminal_event_handler(tx,paused,false);assert!(matches!(rx.recv().unwrap(),WatchEvent::Input(InputEvent::List)));assert!(rx.try_recv().is_err());
+        *event::EVENTS.lock().unwrap()=[key('n')].into();let(tx,rx)=channel();let(_tx,paused)=channel();
+        EXERCISE_RUNNING.store(true,Relaxed);terminal_event_handler(tx,paused,true);EXERCISE_RUNNING.store(false,Relaxed);
+        assert!(matches!(rx.recv().unwrap(),WatchEvent::TerminalEventErr(_)));
+    }
+}
+
 

@@ -1,4 +1,16 @@
-# Contributing to Rustlings
+# Contributing to the restoration course
+
+Read the [architecture record](exercises/01_catalog/architecture.md) and [author validation guide](exercises/01_catalog/maintenance.md) first. The original upstream guidance below is background for ordinary Rustlings courses.
+
+1. Preserve the pinned archive and exact reference reconstruction. Do not silently change the implementation being taught.
+2. Keep mission IDs, names, source ranges, exercise/solution paths, Cargo targets, and registry metadata consistent. Repair ranges must not overlap.
+3. Give each mission a specific contract and diagnostic hints. Keep the active gap small; surrounding source is supplied context.
+4. Add behavioral probes, including a compiling wrong implementation that demonstrates rejection. A forbidden `todo!()` alone is not behavioral evidence.
+5. Keep support inputs registered so `rustlings init` distributes them. Test a fresh installation when changing packaging.
+6. Keep `dev/Cargo.lock` and `exercises/01_catalog/exercises.lock` identical. Update dependencies deliberately.
+7. Run `cargo run --locked -- workshop audit`. CI also checks the course MSRV and Windows/macOS smoke paths.
+
+## Upstream guidance: Contributing to Rustlings
 
 First off, thanks for taking the time to contribute! ❤️
 

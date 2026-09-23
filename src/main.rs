@@ -31,9 +31,15 @@ mod run;
 mod term;
 mod watch;
 
+#[path = "../exercises/01_catalog/host.rs"]
+mod workshop_host;
+
 const CURRENT_FORMAT_VERSION: u8 = 1;
 
 fn main() -> Result<ExitCode> {
+    if let Some(status) = workshop_host::entry()? {
+        return Ok(status);
+    }
     let args = Args::parse();
 
     if cfg!(not(debug_assertions)) && Path::new("dev/rustlings-repo.txt").exists() {

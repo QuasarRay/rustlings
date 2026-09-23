@@ -22,8 +22,38 @@ pub fn append_bins(
     exercise_infos: &[ExerciseInfo],
     exercise_path_prefix: &[u8],
 ) {
-    // TODO: Implement this operation using the contract above.
-    todo!("manifest_targets")
+    buf.push(b'\n');
+    for exercise_info in exercise_infos {
+        buf.extend_from_slice(b"  { name = \"");
+        todo!("manifest_targets");
+        buf.extend_from_slice(b"\", path = \"");
+        buf.extend_from_slice(exercise_path_prefix);
+        buf.extend_from_slice(b"exercises/");
+        if let Some(dir) = exercise_info.dir {
+            buf.extend_from_slice(dir.as_bytes());
+            buf.push(b'/');
+        }
+        buf.extend_from_slice(exercise_info.name.as_bytes());
+        buf.extend_from_slice(b".rs\" },\n");
+
+        let sol_path = exercise_info.sol_path();
+        if !Path::new(&sol_path).exists() {
+            continue;
+        }
+
+        buf.extend_from_slice(b"  { name = \"");
+        buf.extend_from_slice(exercise_info.name.as_bytes());
+        buf.extend_from_slice(b"_sol");
+        buf.extend_from_slice(b"\", path = \"");
+        buf.extend_from_slice(exercise_path_prefix);
+        buf.extend_from_slice(b"solutions/");
+        if let Some(dir) = exercise_info.dir {
+            buf.extend_from_slice(dir.as_bytes());
+            buf.push(b'/');
+        }
+        buf.extend_from_slice(exercise_info.name.as_bytes());
+        buf.extend_from_slice(b".rs\" },\n");
+    }
 }
 // END RUSTLINGS REPAIR
     };

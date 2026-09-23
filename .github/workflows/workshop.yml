@@ -1,0 +1,49 @@
+name: Restoration course
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  CARGO_BUILD_JOBS: 2
+  CARGO_TERM_COLOR: always
+jobs:
+  course:
+    name: Course (${{ matrix.os }}, Rust ${{ matrix.rust }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rust: 1.89.0
+            mode: audit
+          - os: windows-latest
+            rust: stable
+            mode: smoke
+          - os: macos-latest
+            rust: stable
+            mode: smoke
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install declared toolchain and components
+        run: rustup toolchain install ${{ matrix.rust }} --profile minimal --component clippy,rustfmt
+      - name: Select toolchain
+        run: rustup override set ${{ matrix.rust }}
+      - name: Compile and test course infrastructure
+        shell: bash
+        run: |
+          mkdir -p target
+          rustc --edition=2024 -Dwarnings --test exercises/01_catalog/grader.rs -o target/verifier-tests
+          ./target/verifier-tests
+      - name: Canonical course validation (cold artifacts)
+        run: cargo run --locked -- workshop ${{ matrix.mode }}
+  engine-msrv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - run: rustup toolchain install 1.88.0 --profile minimal --component clippy,rustfmt
+      - run: cargo +1.88.0 test --locked --workspace

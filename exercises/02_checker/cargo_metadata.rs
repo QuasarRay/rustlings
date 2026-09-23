@@ -18,8 +18,29 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     pub fn build() -> Result<Self> {
-        // TODO: Implement this operation using the contract above.
-        todo!("cargo_metadata")
+        // Get the target directory from Cargo.
+        let metadata_output = Command::new("cargo")
+            .arg("metadata")
+            .arg("-q")
+            .arg("--format-version")
+            .arg("1")
+            .arg("--no-deps")
+            .stdin(Stdio::null())
+            .stderr(Stdio::inherit())
+            .output()
+            .context(CARGO_METADATA_ERR)?;
+
+        if !metadata_output.status.success() {
+            bail!("`cargo metadata …` failed. Are you in the `rustlings/` directory?");
+        }
+
+        let metadata: CargoMetadata = todo!("cargo_metadata").context(
+            "Failed to read the field `target_directory` from the output of `cargo metadata …`",
+        )?;
+
+        Ok(Self {
+            target_dir: metadata.target_directory,
+        })
     }
 // END RUSTLINGS REPAIR
     };
