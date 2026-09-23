@@ -18,8 +18,23 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     fn update_rows(&mut self) {
-        // TODO: Implement this operation using the contract above.
-        todo!("list_filter")
+        let n_rows = match self.filter {
+            Filter::Done => self
+                .app_state
+                .exercises()
+                .iter()
+                .filter(|exercise| todo!("list_filter"))
+                .count(),
+            Filter::Pending => self
+                .app_state
+                .exercises()
+                .iter()
+                .filter(|exercise| !exercise.done)
+                .count(),
+            Filter::None => self.app_state.exercises().len(),
+        };
+
+        self.scroll_state.set_n_rows(n_rows);
     }
 // END RUSTLINGS REPAIR
     };

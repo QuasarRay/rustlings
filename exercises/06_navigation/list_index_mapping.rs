@@ -18,8 +18,27 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     fn selected_to_exercise_ind(&self, selected: usize) -> Result<usize> {
-        // TODO: Implement this operation using the contract above.
-        todo!("list_index_mapping")
+        match self.filter {
+            Filter::Done => self
+                .app_state
+                .exercises()
+                .iter()
+                .enumerate()
+                .filter(|(_, exercise)| exercise.done)
+                .nth(todo!("list_index_mapping"))
+                .context("Invalid selection index")
+                .map(|(ind, _)| ind),
+            Filter::Pending => self
+                .app_state
+                .exercises()
+                .iter()
+                .enumerate()
+                .filter(|(_, exercise)| !exercise.done)
+                .nth(selected)
+                .context("Invalid selection index")
+                .map(|(ind, _)| ind),
+            Filter::None => Ok(selected),
+        }
     }
 // END RUSTLINGS REPAIR
     };

@@ -4,6 +4,10 @@ Restore Rustlings by repairing Rustlings. This is a second course for learners w
 
 There are **112 cumulative missions** across ten chapters: **91 TODO implementations** and **21 injected regressions**. Every mission targets a real function in the pinned Rustlings implementation. The assessment compiles and tests that implementation with your repairs.
 
+The active repair is at most 16 reference lines (median four). Longer functions remain visible as supplied context. Read their contract and the local state transition first; you do not need to recreate the entire displayed function.
+
+Press `h` for the first hint. Reveal a precise diagnostic region with `rustlings workshop hint MISSION 2`, then request level `3` only if needed: it shows the reference operations for that region. In this checkout, use `cargo run --locked -- workshop hint MISSION 2`. Each level is requested separately.
+
 The reference is [`QuasarRay/rustlings@a650509c789d`](https://github.com/QuasarRay/rustlings/tree/a650509c789da1656f813392b16aa1fa043b7f3e), Rustlings 6.5.0. Finishing restores that version, including its existing behavior and limitations. This course does not silently upgrade its design.
 
 ## Start playing

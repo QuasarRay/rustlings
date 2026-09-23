@@ -18,8 +18,28 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     pub fn parse() -> Result<Self> {
-        // TODO: Implement this operation using the contract above.
-        todo!("catalog_loading")
+        // Read a local `info.toml` if it exists.
+        let slf = match fs::read_to_string("info.toml") {
+            Ok(file_content) => {
+                // LEAKING: The info file is used until the end of the program.
+                toml::de::from_str::<Self>(file_content.leak())
+                    .context("Failed to parse the `info.toml` file")?
+            }
+            Err(e) => {
+                if todo!("catalog_loading") {
+                    return toml::de::from_str(EMBEDDED_FILES.info_file)
+                        .context("Failed to parse the embedded `info.toml` file");
+                }
+
+                return Err(Error::from(e).context("Failed to read the `info.toml` file"));
+            }
+        };
+
+        if slf.exercises.is_empty() {
+            bail!("{NO_EXERCISES_ERR}");
+        }
+
+        Ok(slf)
     }
 // END RUSTLINGS REPAIR
     };

@@ -18,782 +18,782 @@ name = "catalog_paths"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-input_files = ["runner.rs", "grader.rs", "host.rs", "process.rs", "course.rs", "exercises.lock", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh", "export.md", "troubleshooting.md", "architecture.md", "maintenance.md", "source-map.md"]
-hint = "1. Contract: Build an exercise path for both a root-level file and a directory. Preserve the exercises/ prefix and .rs suffix.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+input_files = ["runner.rs", "grader.rs", "host.rs", "process.rs", "course.rs", "exercises.lock", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh", "hints.tsv", "export.md", "troubleshooting.md", "architecture.md", "maintenance.md", "source-map.md"]
+hint = "Build an exercise path for both a root-level file and a directory. Preserve the exercises/ prefix and .rs suffix. Focus on path in src/info_file.rs.\nFor a narrower diagnostic: rustlings workshop hint catalog_paths 2\nFor the strongest hint: rustlings workshop hint catalog_paths 3\nIn this checkout use cargo run --locked -- workshop hint catalog_paths 2"
 
 [[exercises]]
 name = "catalog_defaults"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-hint = "1. Contract: Missing test metadata must enable tests. Missing strict_clippy metadata must remain false.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Missing test metadata must enable tests. Missing strict_clippy metadata must remain false. Focus on default_true in src/info_file.rs.\nFor a narrower diagnostic: rustlings workshop hint catalog_defaults 2\nFor the strongest hint: rustlings workshop hint catalog_defaults 3\nIn this checkout use cargo run --locked -- workshop hint catalog_defaults 2"
 
 [[exercises]]
 name = "catalog_loading"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-hint = "1. Contract: Prefer a local community catalog. Fall back to the embedded catalog only for NotFound; reject malformed or empty local catalogs.\n2. Read the surrounding implementation and its callers in src/info_file.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Prefer a local community catalog. Fall back to the embedded catalog only for NotFound; reject malformed or empty local catalogs. Focus on parse in src/info_file.rs.\nFor a narrower diagnostic: rustlings workshop hint catalog_loading 2\nFor the strongest hint: rustlings workshop hint catalog_loading 3\nIn this checkout use cargo run --locked -- workshop hint catalog_loading 2"
 
 [[exercises]]
 name = "solution_paths"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-hint = "1. Contract: Produce the matching solutions/ path without losing the optional directory or file extension.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Produce the matching solutions/ path without losing the optional directory or file extension. Focus on sol_path in src/exercise.rs.\nFor a narrower diagnostic: rustlings workshop hint solution_paths 2\nFor the strongest hint: rustlings workshop hint solution_paths 3\nIn this checkout use cargo run --locked -- workshop hint solution_paths 2"
 
 [[exercises]]
 name = "manifest_boundaries"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-hint = "1. Contract: Locate only the contents of bin = [...]. Report missing delimiters; offsets are UTF-8 byte offsets.\n2. Read the surrounding implementation and its callers in src/cargo_toml.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Locate only the contents of bin = [...]. Report missing delimiters; offsets are UTF-8 byte offsets. Focus on bins_start_end_ind in src/cargo_toml.rs.\nFor a narrower diagnostic: rustlings workshop hint manifest_boundaries 2\nFor the strongest hint: rustlings workshop hint manifest_boundaries 3\nIn this checkout use cargo run --locked -- workshop hint manifest_boundaries 2"
 
 [[exercises]]
 name = "manifest_targets"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-hint = "1. Contract: Register each exercise and only solutions that exist. Respect path prefixes and preserve catalog order.\n2. Read the surrounding implementation and its callers in src/cargo_toml.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Register each exercise and only solutions that exist. Respect path prefixes and preserve catalog order. Focus on append_bins in src/cargo_toml.rs.\nFor a narrower diagnostic: rustlings workshop hint manifest_targets 2\nFor the strongest hint: rustlings workshop hint manifest_targets 3\nIn this checkout use cargo run --locked -- workshop hint manifest_targets 2"
 
 [[exercises]]
 name = "manifest_update"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-hint = "1. Contract: Replace the bin-list contents while preserving all manifest text before and after the list.\n2. Read the surrounding implementation and its callers in src/cargo_toml.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Replace the bin-list contents while preserving all manifest text before and after the list. Focus on updated_cargo_toml in src/cargo_toml.rs.\nFor a narrower diagnostic: rustlings workshop hint manifest_update 2\nFor the strongest hint: rustlings workshop hint manifest_update 3\nIn this checkout use cargo run --locked -- workshop hint manifest_update 2"
 
 [[exercises]]
 name = "cargo_metadata"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Ask Cargo for its target_directory, check process success, and parse the JSON response with useful error context.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Ask Cargo for its target_directory, check process success, and parse the JSON response with useful error context. Focus on build in src/cmd.rs.\nFor a narrower diagnostic: rustlings workshop hint cargo_metadata 2\nFor the strongest hint: rustlings workshop hint cargo_metadata 3\nIn this checkout use cargo run --locked -- workshop hint cargo_metadata 2"
 
 [[exercises]]
 name = "cargo_arguments"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Construct the Cargo subcommand with the requested binary and optional color. Preserve the debug development-manifest override.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Construct the Cargo subcommand with the requested binary and optional color. Preserve the debug development-manifest override. Focus on cargo in src/cmd.rs.\nFor a narrower diagnostic: rustlings workshop hint cargo_arguments 2\nFor the strongest hint: rustlings workshop hint cargo_arguments 3\nIn this checkout use cargo run --locked -- workshop hint cargo_arguments 2"
 
 [[exercises]]
 name = "process_status"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Return the actual child exit status in both captured and discarded-output modes. Preserve merged output and the 30-second deadline.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Return the actual child exit status in both captured and discarded-output modes. Preserve merged output and the 30-second deadline. Focus on run_cmd in src/cmd.rs.\nFor a narrower diagnostic: rustlings workshop hint process_status 2\nFor the strongest hint: rustlings workshop hint process_status 3\nIn this checkout use cargo run --locked -- workshop hint process_status 2"
 
 [[exercises]]
 name = "binary_location"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Run the compiled debug binary from Cargo target_directory, using the exercise directory as its working directory.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Run the compiled debug binary from Cargo target_directory, using the exercise directory as its working directory. Focus on run_debug_bin in src/cmd.rs.\nFor a narrower diagnostic: rustlings workshop hint binary_location 2\nFor the strongest hint: rustlings workshop hint binary_location 3\nIn this checkout use cargo run --locked -- workshop hint binary_location 2"
 
 [[exercises]]
 name = "command_tail"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Append the extra arguments in order and return the builder for chaining.\n2. Read the surrounding implementation and its callers in src/cmd.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Append the extra arguments in order and return the builder for chaining. Focus on args in src/cmd.rs.\nFor a narrower diagnostic: rustlings workshop hint command_tail 2\nFor the strongest hint: rustlings workshop hint command_tail 3\nIn this checkout use cargo run --locked -- workshop hint command_tail 2"
 
 [[exercises]]
 name = "runtime_failure"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Keep runtime failure visible in the collected output and return failure even when compilation succeeded.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Keep runtime failure visible in the collected output and return failure even when compilation succeeded. Focus on run_bin in src/exercise.rs.\nFor a narrower diagnostic: rustlings workshop hint runtime_failure 2\nFor the strongest hint: rustlings workshop hint runtime_failure 3\nIn this checkout use cargo run --locked -- workshop hint runtime_failure 2"
 
 [[exercises]]
 name = "checker_pipeline"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore the build, optional tests, Clippy, and runtime sequence. Each failed gate must prevent a completion result.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore the build, optional tests, Clippy, and runtime sequence. Each failed gate must prevent a completion result. Focus on run in src/exercise.rs.\nFor a narrower diagnostic: rustlings workshop hint checker_pipeline 2\nFor the strongest hint: rustlings workshop hint checker_pipeline 3\nIn this checkout use cargo run --locked -- workshop hint checker_pipeline 2"
 
 [[exercises]]
 name = "exercise_entry"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Delegate through the common pipeline with normal Clippy policy and the exercise name.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Delegate through the common pipeline with normal Clippy policy and the exercise name. Focus on run_exercise in src/exercise.rs.\nFor a narrower diagnostic: rustlings workshop hint exercise_entry 2\nFor the strongest hint: rustlings workshop hint exercise_entry 3\nIn this checkout use cargo run --locked -- workshop hint exercise_entry 2"
 
 [[exercises]]
 name = "solution_entry"
 dir = "02_checker"
 test = true
 strict_clippy = true
-hint = "1. Contract: Check the _sol binary through the same pipeline, forcing strict Clippy for reference solutions.\n2. Read the surrounding implementation and its callers in src/exercise.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Check the _sol binary through the same pipeline, forcing strict Clippy for reference solutions. Focus on run_solution in src/exercise.rs.\nFor a narrower diagnostic: rustlings workshop hint solution_entry 2\nFor the strongest hint: rustlings workshop hint solution_entry 3\nIn this checkout use cargo run --locked -- workshop hint solution_entry 2"
 
 [[exercises]]
 name = "idempotent_directory"
 dir = "03_distribution"
 test = true
 strict_clippy = true
-hint = "1. Contract: Accept an already existing directory; propagate other creation failures with the path in their context.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Accept an already existing directory; propagate other creation failures with the path in their context. Focus on create_dir_if_not_exists in src/embedded.rs.\nFor a narrower diagnostic: rustlings workshop hint idempotent_directory 2\nFor the strongest hint: rustlings workshop hint idempotent_directory 3\nIn this checkout use cargo run --locked -- workshop hint idempotent_directory 2"
 
 [[exercises]]
 name = "chapter_readme"
 dir = "03_distribution"
 test = true
 strict_clippy = true
-hint = "1. Contract: Create a chapter directory and write its embedded README.md there.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Create a chapter directory and write its embedded README.md there. Focus on init_on_disk in src/embedded.rs.\nFor a narrower diagnostic: rustlings workshop hint chapter_readme 2\nFor the strongest hint: rustlings workshop hint chapter_readme 3\nIn this checkout use cargo run --locked -- workshop hint chapter_readme 2"
 
 [[exercises]]
 name = "materialize_exercises"
 dir = "03_distribution"
 test = true
 strict_clippy = true
-hint = "1. Contract: Create the exercise tree, chapter READMEs, exercises, and input fixtures from the embedded catalog.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Create the exercise tree, chapter READMEs, exercises, and input fixtures from the embedded catalog. Focus on init_exercises_dir in src/embedded.rs.\nFor a narrower diagnostic: rustlings workshop hint materialize_exercises 2\nFor the strongest hint: rustlings workshop hint materialize_exercises 3\nIn this checkout use cargo run --locked -- workshop hint materialize_exercises 2"
 
 [[exercises]]
 name = "restore_exercise"
 dir = "03_distribution"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore exactly one embedded exercise at a caller-validated index. Propagate filesystem write failures with context.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore exactly one embedded exercise at a caller-validated index. Propagate filesystem write failures with context. Focus on write_exercise_to_disk in src/embedded.rs.\nFor a narrower diagnostic: rustlings workshop hint restore_exercise 2\nFor the strongest hint: rustlings workshop hint restore_exercise 3\nIn this checkout use cargo run --locked -- workshop hint restore_exercise 2"
 
 [[exercises]]
 name = "reveal_solution"
 dir = "03_distribution"
 test = true
 strict_clippy = true
-hint = "1. Contract: Write the selected embedded solution under its chapter and name, and return that same path.\n2. Read the surrounding implementation and its callers in src/embedded.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Write the selected embedded solution under its chapter and name, and return that same path. Focus on write_solution_to_disk in src/embedded.rs.\nFor a narrower diagnostic: rustlings workshop hint reveal_solution 2\nFor the strongest hint: rustlings workshop hint reveal_solution 3\nIn this checkout use cargo run --locked -- workshop hint reveal_solution 2"
 
 [[exercises]]
 name = "initialize_workspace"
 dir = "03_distribution"
 test = true
 strict_clippy = true
-hint = "1. Contract: Complete one missing initialization stage. Preserve existing-directory checks, workspace detection, catalog materialization, and the generated manifest.\n2. Read the surrounding implementation and its callers in src/init.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Complete one missing initialization stage. Preserve existing-directory checks, workspace detection, catalog materialization, and the generated manifest. Focus on init in src/init.rs.\nFor a narrower diagnostic: rustlings workshop hint initialize_workspace 2\nFor the strongest hint: rustlings workshop hint initialize_workspace 3\nIn this checkout use cargo run --locked -- workshop hint initialize_workspace 2"
 
 [[exercises]]
 name = "load_progress"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Reconstruct completed exercises by name from the saved state. Count each completed exercise once; tolerate an unreadable or incomplete state.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Reconstruct completed exercises by name from the saved state. Count each completed exercise once; tolerate an unreadable or incomplete state. Focus on new in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint load_progress 2\nFor the strongest hint: rustlings workshop hint load_progress 3\nIn this checkout use cargo run --locked -- workshop hint load_progress 2"
 
 [[exercises]]
 name = "pending_count"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Compute pending exercises from the cached completed count.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Compute pending exercises from the cached completed count. Focus on n_pending in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint pending_count 2\nFor the strongest hint: rustlings workshop hint pending_count 3\nIn this checkout use cargo run --locked -- workshop hint pending_count 2"
 
 [[exercises]]
 name = "persist_progress"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Write the current exercise and completed names using the existing file format. Rewind and truncate so an older longer save cannot leave stale names.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Write the current exercise and completed names using the existing file format. Rewind and truncate so an older longer save cannot leave stale names. Focus on write in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint persist_progress 2\nFor the strongest hint: rustlings workshop hint persist_progress 3\nIn this checkout use cargo run --locked -- workshop hint persist_progress 2"
 
 [[exercises]]
 name = "select_index"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Reject indices at or beyond the catalog length, avoid redundant writes, and persist valid changes.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Reject indices at or beyond the catalog length, avoid redundant writes, and persist valid changes. Focus on set_current_exercise_ind in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint select_index 2\nFor the strongest hint: rustlings workshop hint select_index 3\nIn this checkout use cargo run --locked -- workshop hint select_index 2"
 
 [[exercises]]
 name = "select_name"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Resolve the first exact exercise name, report unknown names, and persist the selected index.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Resolve the first exact exercise name, report unknown names, and persist the selected index. Focus on set_current_exercise_by_name in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint select_name 2\nFor the strongest hint: rustlings workshop hint select_name 3\nIn this checkout use cargo run --locked -- workshop hint select_name 2"
 
 [[exercises]]
 name = "completion_count"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Make repeated status updates idempotent. Completing increments the count; reopening decrements it.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Make repeated status updates idempotent. Completing increments the count; reopening decrements it. Focus on set_status in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint completion_count 2\nFor the strongest hint: rustlings workshop hint completion_count 3\nIn this checkout use cargo run --locked -- workshop hint completion_count 2"
 
 [[exercises]]
 name = "reopen_exercise"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Persist only when changing a completed exercise back to pending.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Persist only when changing a completed exercise back to pending. Focus on set_pending in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint reopen_exercise 2\nFor the strongest hint: rustlings workshop hint reopen_exercise 3\nIn this checkout use cargo run --locked -- workshop hint reopen_exercise 2"
 
 [[exercises]]
 name = "reset_source"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore embedded official exercises; use the existing git-stash path for community exercises. Propagate command failures.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore embedded official exercises; use the existing git-stash path for community exercises. Propagate command failures. Focus on reset in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint reset_source 2\nFor the strongest hint: rustlings workshop hint reset_source 3\nIn this checkout use cargo run --locked -- workshop hint reset_source 2"
 
 [[exercises]]
 name = "reset_current"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Mark the selected exercise pending before restoring its source.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Mark the selected exercise pending before restoring its source. Focus on reset_current_exercise in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint reset_current 2\nFor the strongest hint: rustlings workshop hint reset_current 3\nIn this checkout use cargo run --locked -- workshop hint reset_current 2"
 
 [[exercises]]
 name = "reset_by_index"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Validate the index, persist pending status, restore the corresponding file, and return its name.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Validate the index, persist pending status, restore the corresponding file, and return its name. Focus on reset_exercise_by_ind in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint reset_by_index 2\nFor the strongest hint: rustlings workshop hint reset_by_index 3\nIn this checkout use cargo run --locked -- workshop hint reset_by_index 2"
 
 [[exercises]]
 name = "next_pending"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Search after the current exercise first, then wrap to the beginning. Translate suffix-local positions back to catalog indices.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Search after the current exercise first, then wrap to the beginning. Translate suffix-local positions back to catalog indices. Focus on next_pending_exercise_ind in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint next_pending 2\nFor the strongest hint: rustlings workshop hint next_pending 3\nIn this checkout use cargo run --locked -- workshop hint next_pending 2"
 
 [[exercises]]
 name = "solution_visibility"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Preserve debug-build behavior; materialize official solutions and only expose existing community solutions.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Preserve debug-build behavior; materialize official solutions and only expose existing community solutions. Focus on current_solution_path in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint solution_visibility 2\nFor the strongest hint: rustlings workshop hint solution_visibility 3\nIn this checkout use cargo run --locked -- workshop hint solution_visibility 2"
 
 [[exercises]]
 name = "parallel_check_all"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one stage of the parallel check-all coordinator. Keep the worker limit, result collection, status counts, and earliest pending result consistent.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one stage of the parallel check-all coordinator. Keep the worker limit, result collection, status counts, and earliest pending result consistent. Focus on check_all_exercises_impl in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint parallel_check_all 2\nFor the strongest hint: rustlings workshop hint parallel_check_all 3\nIn this checkout use cargo run --locked -- workshop hint parallel_check_all 2"
 
 [[exercises]]
 name = "save_check_all"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Run the aggregate checker and persist its updated progress before returning.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Run the aggregate checker and persist its updated progress before returning. Focus on check_all_exercises in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint save_check_all 2\nFor the strongest hint: rustlings workshop hint save_check_all 3\nIn this checkout use cargo run --locked -- workshop hint save_check_all 2"
 
 [[exercises]]
 name = "advance_progress"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Complete the current exercise, choose the next pending item, and run the final regression check before declaring the course finished.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Complete the current exercise, choose the next pending item, and run the final regression check before declaring the course finished. Focus on done_current_exercise in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint advance_progress 2\nFor the strongest hint: rustlings workshop hint advance_progress 3\nIn this checkout use cargo run --locked -- workshop hint advance_progress 2"
 
 [[exercises]]
 name = "finish_message"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Render the configured completion message and progress through the original terminal output path.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Render the configured completion message and progress through the original terminal output path. Focus on render_final_message in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint finish_message 2\nFor the strongest hint: rustlings workshop hint finish_message 3\nIn this checkout use cargo run --locked -- workshop hint finish_message 2"
 
 [[exercises]]
 name = "single_run_result"
 dir = "04_progress"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore the single-exercise command, including pending status on failure and advancing after successful validation.\n2. Read the surrounding implementation and its callers in src/run.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore the single-exercise command, including pending status on failure and advancing after successful validation. Focus on run in src/run.rs.\nFor a narrower diagnostic: rustlings workshop hint single_run_result 2\nFor the strongest hint: rustlings workshop hint single_run_result 3\nIn this checkout use cargo run --locked -- workshop hint single_run_result 2"
 
 [[exercises]]
 name = "terminal_budget"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Initialize a bounded terminal writer with zero consumed width and the requested maximum.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Initialize a bounded terminal writer with zero consumed width and the requested maximum. Focus on new in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint terminal_budget 2\nFor the strongest hint: rustlings workshop hint terminal_budget 3\nIn this checkout use cargo run --locked -- workshop hint terminal_budget 2"
 
 [[exercises]]
 name = "ascii_width"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Write only ASCII bytes that fit the remaining terminal width and account for the bytes actually written.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Write only ASCII bytes that fit the remaining terminal width and account for the bytes actually written. Focus on write_ascii in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint ascii_width 2\nFor the strongest hint: rustlings workshop hint ascii_width 3\nIn this checkout use cargo run --locked -- workshop hint ascii_width 2"
 
 [[exercises]]
 name = "unicode_width"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Limit by Unicode scalar values rather than slicing inside a UTF-8 character. Update the same output-width budget.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Limit by Unicode scalar values rather than slicing inside a UTF-8 character. Update the same output-width budget. Focus on write_str in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint unicode_width 2\nFor the strongest hint: rustlings workshop hint unicode_width 3\nIn this checkout use cargo run --locked -- workshop hint unicode_width 2"
 
 [[exercises]]
 name = "progress_counter"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Increment the completed check count and redraw the counter.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Increment the completed check count and redraw the counter. Focus on increment in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint progress_counter 2\nFor the strongest hint: rustlings workshop hint progress_counter 3\nIn this checkout use cargo run --locked -- workshop hint progress_counter 2"
 
 [[exercises]]
 name = "progress_bar"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore a progress-bar stage while retaining the original width calculations and completed/pending formatting.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore a progress-bar stage while retaining the original width calculations and completed/pending formatting. Focus on progress_bar in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint progress_bar 2\nFor the strongest hint: rustlings workshop hint progress_bar 3\nIn this checkout use cargo run --locked -- workshop hint progress_bar 2"
 
 [[exercises]]
 name = "canonical_paths"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Resolve a path to a Unicode canonical path; retain the existing Windows-prefix behavior and return None for failures.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Resolve a path to a Unicode canonical path; retain the existing Windows-prefix behavior and return None for failures. Focus on canonicalize in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint canonical_paths 2\nFor the strongest hint: rustlings workshop hint canonical_paths 3\nIn this checkout use cargo run --locked -- workshop hint canonical_paths 2"
 
 [[exercises]]
 name = "file_link_frame"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Style a file path using the caller-provided writer and restore terminal attributes afterward.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Style a file path using the caller-provided writer and restore terminal attributes afterward. Focus on file_path in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint file_link_frame 2\nFor the strongest hint: rustlings workshop hint file_link_frame 3\nIn this checkout use cargo run --locked -- workshop hint file_link_frame 2"
 
 [[exercises]]
 name = "file_hyperlink"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Emit the original terminal hyperlink sequence around the displayed file path.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Emit the original terminal hyperlink sequence around the displayed file path. Focus on terminal_file_link in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint file_hyperlink 2\nFor the strongest hint: rustlings workshop hint file_hyperlink 3\nIn this checkout use cargo run --locked -- workshop hint file_hyperlink 2"
 
 [[exercises]]
 name = "ansi_buffer"
 dir = "05_terminal"
 test = true
 strict_clippy = true
-hint = "1. Contract: Append an ANSI command to a byte buffer through the original formatting adapter.\n2. Read the surrounding implementation and its callers in src/term.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Append an ANSI command to a byte buffer through the original formatting adapter. Focus on write_ansi in src/term.rs.\nFor a narrower diagnostic: rustlings workshop hint ansi_buffer 2\nFor the strongest hint: rustlings workshop hint ansi_buffer 3\nIn this checkout use cargo run --locked -- workshop hint ansi_buffer 2"
 
 [[exercises]]
 name = "scroll_initial"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Initialize scroll state without subtracting below zero when the selected row is close to the start.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Initialize scroll state without subtracting below zero when the selected row is close to the start. Focus on new in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_initial 2\nFor the strongest hint: rustlings workshop hint scroll_initial 3\nIn this checkout use cargo run --locked -- workshop hint scroll_initial 2"
 
 [[exercises]]
 name = "scroll_window"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Keep the selection visible with padding, then clamp the viewport against the total row count.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Keep the selection visible with padding, then clamp the viewport against the total row count. Focus on update_offset in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_window 2\nFor the strongest hint: rustlings workshop hint scroll_window 3\nIn this checkout use cargo run --locked -- workshop hint scroll_window 2"
 
 [[exercises]]
 name = "scroll_next"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Move one row forward when a selection exists and clamp at the final row.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Move one row forward when a selection exists and clamp at the final row. Focus on select_next in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_next 2\nFor the strongest hint: rustlings workshop hint scroll_next 3\nIn this checkout use cargo run --locked -- workshop hint scroll_next 2"
 
 [[exercises]]
 name = "scroll_previous"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Move one row backward without underflow; an absent selection remains absent.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Move one row backward without underflow; an absent selection remains absent. Focus on select_previous in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_previous 2\nFor the strongest hint: rustlings workshop hint scroll_previous 3\nIn this checkout use cargo run --locked -- workshop hint scroll_previous 2"
 
 [[exercises]]
 name = "scroll_resize"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Clear selection for an empty list and clamp a previous selection after rows are removed.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Clear selection for an empty list and clamp a previous selection after rows are removed. Focus on set_n_rows in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_resize 2\nFor the strongest hint: rustlings workshop hint scroll_resize 3\nIn this checkout use cargo run --locked -- workshop hint scroll_resize 2"
 
 [[exercises]]
 name = "scroll_padding"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Limit padding to one quarter of the visible rows and the configured maximum.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Limit padding to one quarter of the visible rows and the configured maximum. Focus on update_scroll_padding in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_padding 2\nFor the strongest hint: rustlings workshop hint scroll_padding 3\nIn this checkout use cargo run --locked -- workshop hint scroll_padding 2"
 
 [[exercises]]
 name = "scroll_viewport"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Update the viewport size, recompute padding, and then make the selected row visible.\n2. Read the surrounding implementation and its callers in src/list/scroll_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Update the viewport size, recompute padding, and then make the selected row visible. Focus on set_max_n_rows_to_display in src/list/scroll_state.rs.\nFor a narrower diagnostic: rustlings workshop hint scroll_viewport 2\nFor the strongest hint: rustlings workshop hint scroll_viewport 3\nIn this checkout use cargo run --locked -- workshop hint scroll_viewport 2"
 
 [[exercises]]
 name = "list_model"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Construct list state from application progress and the terminal dimensions, preserving row-index mappings.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Construct list state from application progress and the terminal dimensions, preserving row-index mappings. Focus on build in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_model 2\nFor the strongest hint: rustlings workshop hint list_model 3\nIn this checkout use cargo run --locked -- workshop hint list_model 2"
 
 [[exercises]]
 name = "list_resize"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Update the rendering dimensions and the scroll viewport for the available rows.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Update the rendering dimensions and the scroll viewport for the available rows. Focus on set_term_size in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_resize 2\nFor the strongest hint: rustlings workshop hint list_resize 3\nIn this checkout use cargo run --locked -- workshop hint list_resize 2"
 
 [[exercises]]
 name = "list_rows"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one stage of row rendering: selection, completion status, file names, and clipping must remain synchronized.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one stage of row rendering: selection, completion status, file names, and clipping must remain synchronized. Focus on draw_rows in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_rows 2\nFor the strongest hint: rustlings workshop hint list_rows 3\nIn this checkout use cargo run --locked -- workshop hint list_rows 2"
 
 [[exercises]]
 name = "list_render"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one stage of the existing list screen; retain search input, filters, help keys, and terminal-size handling.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one stage of the existing list screen; retain search input, filters, help keys, and terminal-size handling. Focus on draw in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_render 2\nFor the strongest hint: rustlings workshop hint list_render 3\nIn this checkout use cargo run --locked -- workshop hint list_render 2"
 
 [[exercises]]
 name = "list_filter"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Rebuild visible exercise indices from the active completion filter and optional search filter.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Rebuild visible exercise indices from the active completion filter and optional search filter. Focus on update_rows in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_filter 2\nFor the strongest hint: rustlings workshop hint list_filter 3\nIn this checkout use cargo run --locked -- workshop hint list_filter 2"
 
 [[exercises]]
 name = "list_index_mapping"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Translate a visible selection through filtered row indices, and report missing/out-of-range selections.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Translate a visible selection through filtered row indices, and report missing/out-of-range selections. Focus on selected_to_exercise_ind in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_index_mapping 2\nFor the strongest hint: rustlings workshop hint list_index_mapping 3\nIn this checkout use cargo run --locked -- workshop hint list_index_mapping 2"
 
 [[exercises]]
 name = "list_reset"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Reset the selected exercise and update the corresponding filtered row state.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Reset the selected exercise and update the corresponding filtered row state. Focus on reset_selected in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_reset 2\nFor the strongest hint: rustlings workshop hint list_reset 3\nIn this checkout use cargo run --locked -- workshop hint list_reset 2"
 
 [[exercises]]
 name = "list_search"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Apply the original substring search to exercise names and synchronize the displayed rows and selection.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Apply the original substring search to exercise names and synchronize the displayed rows and selection. Focus on apply_search_query in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_search 2\nFor the strongest hint: rustlings workshop hint list_search 3\nIn this checkout use cargo run --locked -- workshop hint list_search 2"
 
 [[exercises]]
 name = "list_open"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Resolve a selected visible row, make its exercise current, and indicate whether the list should exit.\n2. Read the surrounding implementation and its callers in src/list/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Resolve a selected visible row, make its exercise current, and indicate whether the list should exit. Focus on selected_to_current_exercise in src/list/state.rs.\nFor a narrower diagnostic: rustlings workshop hint list_open 2\nFor the strongest hint: rustlings workshop hint list_open 3\nIn this checkout use cargo run --locked -- workshop hint list_open 2"
 
 [[exercises]]
 name = "list_keys"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one input-handling branch while preserving filtering, navigation, search, reset, and quit behavior.\n2. Read the surrounding implementation and its callers in src/list.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one input-handling branch while preserving filtering, navigation, search, reset, and quit behavior. Focus on handle_list in src/list.rs.\nFor a narrower diagnostic: rustlings workshop hint list_keys 2\nFor the strongest hint: rustlings workshop hint list_keys 3\nIn this checkout use cargo run --locked -- workshop hint list_keys 2"
 
 [[exercises]]
 name = "list_lifecycle"
 dir = "06_navigation"
 test = true
 strict_clippy = true
-hint = "1. Contract: Enter the original list terminal mode and restore it when handling finishes, including error paths.\n2. Read the surrounding implementation and its callers in src/list.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Enter the original list terminal mode and restore it when handling finishes, including error paths. Focus on list in src/list.rs.\nFor a narrower diagnostic: rustlings workshop hint list_lifecycle 2\nFor the strongest hint: rustlings workshop hint list_lifecycle 3\nIn this checkout use cargo run --locked -- workshop hint list_lifecycle 2"
 
 [[exercises]]
 name = "input_pause"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Pause watcher-triggered work while an exercise is running; the existing Drop implementation resumes it.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Pause watcher-triggered work while an exercise is running; the existing Drop implementation resumes it. Focus on scoped_pause in src/watch.rs.\nFor a narrower diagnostic: rustlings workshop hint input_pause 2\nFor the strongest hint: rustlings workshop hint input_pause 3\nIn this checkout use cargo run --locked -- workshop hint input_pause 2"
 
 [[exercises]]
 name = "debounce_updates"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore the debouncer stage so bursts of file events produce one update per modified exercise per quiet interval.\n2. Read the surrounding implementation and its callers in src/watch/notify_event.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore the debouncer stage so bursts of file events produce one update per modified exercise per quiet interval. Focus on build in src/watch/notify_event.rs.\nFor a narrower diagnostic: rustlings workshop hint debounce_updates 2\nFor the strongest hint: rustlings workshop hint debounce_updates 3\nIn this checkout use cargo run --locked -- workshop hint debounce_updates 2"
 
 [[exercises]]
 name = "file_notifications"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Ignore unrelated events and non-Rust files, then map changed Rust filenames to exercise indices.\n2. Read the surrounding implementation and its callers in src/watch/notify_event.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Ignore unrelated events and non-Rust files, then map changed Rust filenames to exercise indices. Focus on handle_event in src/watch/notify_event.rs.\nFor a narrower diagnostic: rustlings workshop hint file_notifications 2\nFor the strongest hint: rustlings workshop hint file_notifications 3\nIn this checkout use cargo run --locked -- workshop hint file_notifications 2"
 
 [[exercises]]
 name = "terminal_events"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Translate terminal events to watch events while respecting pause/resume coordination and manual-run mode.\n2. Read the surrounding implementation and its callers in src/watch/terminal_event.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Translate terminal events to watch events while respecting pause/resume coordination and manual-run mode. Focus on terminal_event_handler in src/watch/terminal_event.rs.\nFor a narrower diagnostic: rustlings workshop hint terminal_events 2\nFor the strongest hint: rustlings workshop hint terminal_events 3\nIn this checkout use cargo run --locked -- workshop hint terminal_events 2"
 
 [[exercises]]
 name = "watch_model"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Create the watch state and terminal-event thread using the original channel types and initial pending status.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Create the watch state and terminal-event thread using the original channel types and initial pending status. Focus on build in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_model 2\nFor the strongest hint: rustlings workshop hint watch_model 3\nIn this checkout use cargo run --locked -- workshop hint watch_model 2"
 
 [[exercises]]
 name = "watch_run"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Run the selected exercise, record its output and done status, coordinate the editor, and render the result.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Run the selected exercise, record its output and done status, coordinate the editor, and render the result. Focus on run_current_exercise in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_run 2\nFor the strongest hint: rustlings workshop hint watch_run 3\nIn this checkout use cargo run --locked -- workshop hint watch_run 2"
 
 [[exercises]]
 name = "watch_reset"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore a reset-confirmation stage and resume the event thread when the interaction completes.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore a reset-confirmation stage and resume the event thread when the interaction completes. Focus on reset_exercise in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_reset 2\nFor the strongest hint: rustlings workshop hint watch_reset 3\nIn this checkout use cargo run --locked -- workshop hint watch_reset 2"
 
 [[exercises]]
 name = "watch_change"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Only rerun for a change to the current exercise. Preserve the index comparison and output propagation.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Only rerun for a change to the current exercise. Preserve the index comparison and output propagation. Focus on handle_file_change in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_change 2\nFor the strongest hint: rustlings workshop hint watch_change 3\nIn this checkout use cargo run --locked -- workshop hint watch_change 2"
 
 [[exercises]]
 name = "watch_completion"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Both done variants permit advancing; Pending does not.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Both done variants permit advancing; Pending does not. Focus on done in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_completion 2\nFor the strongest hint: rustlings workshop hint watch_completion 3\nIn this checkout use cargo run --locked -- workshop hint watch_completion 2"
 
 [[exercises]]
 name = "watch_advance"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Advance through AppState only when the current exercise is complete; otherwise report CurrentPending.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Advance through AppState only when the current exercise is complete; otherwise report CurrentPending. Focus on next_exercise in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_advance 2\nFor the strongest hint: rustlings workshop hint watch_advance 3\nIn this checkout use cargo run --locked -- workshop hint watch_advance 2"
 
 [[exercises]]
 name = "watch_prompt"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore a prompt stage so only currently valid actions are advertised.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore a prompt stage so only currently valid actions are advertised. Focus on show_prompt in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_prompt 2\nFor the strongest hint: rustlings workshop hint watch_prompt 3\nIn this checkout use cargo run --locked -- workshop hint watch_prompt 2"
 
 [[exercises]]
 name = "watch_render"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one stage of the existing result screen: diagnostics, hints, solution link, progress, and current path.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one stage of the existing result screen: diagnostics, hints, solution link, progress, and current path. Focus on render in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_render 2\nFor the strongest hint: rustlings workshop hint watch_render 3\nIn this checkout use cargo run --locked -- workshop hint watch_render 2"
 
 [[exercises]]
 name = "watch_hint"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Reveal a hint once and redraw only when its visibility changes.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Reveal a hint once and redraw only when its visibility changes. Focus on show_hint in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_hint 2\nFor the strongest hint: rustlings workshop hint watch_hint 3\nIn this checkout use cargo run --locked -- workshop hint watch_hint 2"
 
 [[exercises]]
 name = "watch_check_all"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Run all checks while input is paused; select a newly pending exercise or display the final message.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Run all checks while input is paused; select a newly pending exercise or display the final message. Focus on check_all_exercises in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_check_all 2\nFor the strongest hint: rustlings workshop hint watch_check_all 3\nIn this checkout use cargo run --locked -- workshop hint watch_check_all 2"
 
 [[exercises]]
 name = "watch_resize"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Redraw after an actual terminal-width change and avoid redundant redraws.\n2. Read the surrounding implementation and its callers in src/watch/state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Redraw after an actual terminal-width change and avoid redundant redraws. Focus on update_term_width in src/watch/state.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_resize 2\nFor the strongest hint: rustlings workshop hint watch_resize 3\nIn this checkout use cargo run --locked -- workshop hint watch_resize 2"
 
 [[exercises]]
 name = "watch_dispatch"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one branch of the existing watch-event loop without changing event ownership or exit semantics.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one branch of the existing watch-event loop without changing event ownership or exit semantics. Focus on run_watch in src/watch.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_dispatch 2\nFor the strongest hint: rustlings workshop hint watch_dispatch 3\nIn this checkout use cargo run --locked -- workshop hint watch_dispatch 2"
 
 [[exercises]]
 name = "watch_list_transition"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Switch between watch and list modes using their existing exit states.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Switch between watch and list modes using their existing exit states. Focus on watch_list_loop in src/watch.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_list_transition 2\nFor the strongest hint: rustlings workshop hint watch_list_transition 3\nIn this checkout use cargo run --locked -- workshop hint watch_list_transition 2"
 
 [[exercises]]
 name = "watch_start"
 dir = "07_watch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Construct the watcher and channels and enter the existing watch/list loop with its original terminal cleanup.\n2. Read the surrounding implementation and its callers in src/watch.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Construct the watcher and channels and enter the existing watch/list loop with its original terminal cleanup. Focus on watch in src/watch.rs.\nFor a narrower diagnostic: rustlings workshop hint watch_start 2\nFor the strongest hint: rustlings workshop hint watch_start 3\nIn this checkout use cargo run --locked -- workshop hint watch_start 2"
 
 [[exercises]]
 name = "editor_process"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Execute an editor command and preserve output/error context without silently accepting nonzero exit status.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Execute an editor command and preserve output/error context without silently accepting nonzero exit status. Focus on run_cmd in src/editor.rs.\nFor a narrower diagnostic: rustlings workshop hint editor_process 2\nFor the strongest hint: rustlings workshop hint editor_process 3\nIn this checkout use cargo run --locked -- workshop hint editor_process 2"
 
 [[exercises]]
 name = "editor_discovery"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Use the existing version probe to detect a program; process spawning failures mean unavailable.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Use the existing version probe to detect a program; process spawning failures mean unavailable. Focus on program_exists in src/editor.rs.\nFor a narrower diagnostic: rustlings workshop hint editor_discovery 2\nFor the strongest hint: rustlings workshop hint editor_discovery 3\nIn this checkout use cargo run --locked -- workshop hint editor_discovery 2"
 
 [[exercises]]
 name = "editor_selection"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Choose the configured editor, VS Code, or Zellij according to the original precedence and argument parsing.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Choose the configured editor, VS Code, or Zellij according to the original precedence and argument parsing. Focus on new in src/editor.rs.\nFor a narrower diagnostic: rustlings workshop hint editor_selection 2\nFor the strongest hint: rustlings workshop hint editor_selection 3\nIn this checkout use cargo run --locked -- workshop hint editor_selection 2"
 
 [[exercises]]
 name = "editor_launch"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one launch stage, preserving asynchronous startup and the editor-specific exercise path arguments.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one launch stage, preserving asynchronous startup and the editor-specific exercise path arguments. Focus on open in src/editor.rs.\nFor a narrower diagnostic: rustlings workshop hint editor_launch 2\nFor the strongest hint: rustlings workshop hint editor_launch 3\nIn this checkout use cargo run --locked -- workshop hint editor_launch 2"
 
 [[exercises]]
 name = "editor_close"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Close managed Zellij panes while retaining the original behavior for ordinary command-based editors.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Close managed Zellij panes while retaining the original behavior for ordinary command-based editors. Focus on close in src/editor.rs.\nFor a narrower diagnostic: rustlings workshop hint editor_close 2\nFor the strongest hint: rustlings workshop hint editor_close 3\nIn this checkout use cargo run --locked -- workshop hint editor_close 2"
 
 [[exercises]]
 name = "editor_join"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Join an optional editor startup task and propagate its returned editor or error.\n2. Read the surrounding implementation and its callers in src/editor.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Join an optional editor startup task and propagate its returned editor or error. Focus on join in src/editor.rs.\nFor a narrower diagnostic: rustlings workshop hint editor_join 2\nFor the strongest hint: rustlings workshop hint editor_join 3\nIn this checkout use cargo run --locked -- workshop hint editor_join 2"
 
 [[exercises]]
 name = "pane_identifier"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Parse the existing terminal_<decimal-id> newline format and return both the original digits and their numeric value.\n2. Read the surrounding implementation and its callers in src/editor/zellij.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Parse the existing terminal_<decimal-id> newline format and return both the original digits and their numeric value. Focus on parse_pane_id in src/editor/zellij.rs.\nFor a narrower diagnostic: rustlings workshop hint pane_identifier 2\nFor the strongest hint: rustlings workshop hint pane_identifier 3\nIn this checkout use cargo run --locked -- workshop hint pane_identifier 2"
 
 [[exercises]]
 name = "pane_status"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Parse Zellij pane JSON and determine whether the requested pane ID is still present.\n2. Read the surrounding implementation and its callers in src/editor/zellij.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Parse Zellij pane JSON and determine whether the requested pane ID is still present. Focus on pane_open in src/editor/zellij.rs.\nFor a narrower diagnostic: rustlings workshop hint pane_status 2\nFor the strongest hint: rustlings workshop hint pane_status 3\nIn this checkout use cargo run --locked -- workshop hint pane_status 2"
 
 [[exercises]]
 name = "pane_close"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Pass the pane ID as a separate argument to the original Zellij close-pane command.\n2. Read the surrounding implementation and its callers in src/editor/zellij.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Pass the pane ID as a separate argument to the original Zellij close-pane command. Focus on close_pane in src/editor/zellij.rs.\nFor a narrower diagnostic: rustlings workshop hint pane_close 2\nFor the strongest hint: rustlings workshop hint pane_close 3\nIn this checkout use cargo run --locked -- workshop hint pane_close 2"
 
 [[exercises]]
 name = "app_editor_start"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Coordinate the application current-exercise path with the optional editor startup task.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Coordinate the application current-exercise path with the optional editor startup task. Focus on open_editor in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint app_editor_start 2\nFor the strongest hint: rustlings workshop hint app_editor_start 3\nIn this checkout use cargo run --locked -- workshop hint app_editor_start 2"
 
 [[exercises]]
 name = "app_editor_join"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Join the startup task and put the resulting editor back into AppState.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Join the startup task and put the resulting editor back into AppState. Focus on join_editor_handle in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint app_editor_join 2\nFor the strongest hint: rustlings workshop hint app_editor_join 3\nIn this checkout use cargo run --locked -- workshop hint app_editor_join 2"
 
 [[exercises]]
 name = "app_editor_close"
 dir = "08_editors"
 test = true
 strict_clippy = true
-hint = "1. Contract: Close the optional editor and preserve the no-editor path.\n2. Read the surrounding implementation and its callers in src/app_state.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Close the optional editor and preserve the no-editor path. Focus on close_editor in src/app_state.rs.\nFor a narrower diagnostic: rustlings workshop hint app_editor_close 2\nFor the strongest hint: rustlings workshop hint app_editor_close 3\nIn this checkout use cargo run --locked -- workshop hint app_editor_close 2"
 
 [[exercises]]
 name = "author_names"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Permit alphanumeric characters and underscores in exercise names. Report the first forbidden character.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a BUG mission. Compare each changed value, index, argument, or branch against the contract. Use the failing regression output to narrow the branch.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Permit alphanumeric characters and underscores in exercise names. Report the first forbidden character. Focus on forbidden_char in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_names 2\nFor the strongest hint: rustlings workshop hint author_names 3\nIn this checkout use cargo run --locked -- workshop hint author_names 2"
 
 [[exercises]]
 name = "author_manifest"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Generate the expected binary registration and compare it against the manifest without modifying that manifest.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Generate the expected binary registration and compare it against the manifest without modifying that manifest. Focus on check_cargo_toml in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_manifest 2\nFor the strongest hint: rustlings workshop hint author_manifest 3\nIn this checkout use cargo run --locked -- workshop hint author_manifest 2"
 
 [[exercises]]
 name = "author_catalog"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one validation stage for unique names, hints, paths, TODO guidance, and declared test presence.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one validation stage for unique names, hints, paths, TODO guidance, and declared test presence. Focus on check_info_file_exercises in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_catalog 2\nFor the strongest hint: rustlings workshop hint author_catalog 3\nIn this checkout use cargo run --locked -- workshop hint author_catalog 2"
 
 [[exercises]]
 name = "author_file_inventory"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Reject undeclared files and excessive directory nesting while allowing chapter READMEs and declared inputs.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Reject undeclared files and excessive directory nesting while allowing chapter READMEs and declared inputs. Focus on check_unexpected_files in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_file_inventory 2\nFor the strongest hint: rustlings workshop hint author_file_inventory 3\nIn this checkout use cargo run --locked -- workshop hint author_file_inventory 2"
 
 [[exercises]]
 name = "author_unsolved"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Run every non-exempt starter and reject an already solved exercise; propagate worker failures.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Run every non-exempt starter and reject an already solved exercise; propagate worker failures. Focus on check_exercises_unsolved in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_unsolved 2\nFor the strongest hint: rustlings workshop hint author_unsolved 3\nIn this checkout use cargo run --locked -- workshop hint author_unsolved 2"
 
 [[exercises]]
 name = "author_format"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Validate the format version and combine metadata, directory, and unsolved-starter checks.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Validate the format version and combine metadata, directory, and unsolved-starter checks. Focus on check_exercises in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_format 2\nFor the strongest hint: rustlings workshop hint author_format 3\nIn this checkout use cargo run --locked -- workshop hint author_format 2"
 
 [[exercises]]
 name = "author_solutions"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one solution-validation stage, preserving required-solution handling, strict Clippy, formatting, and unexpected-file checks.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one solution-validation stage, preserving required-solution handling, strict Clippy, formatting, and unexpected-file checks. Focus on check_solutions in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_solutions 2\nFor the strongest hint: rustlings workshop hint author_solutions 3\nIn this checkout use cargo run --locked -- workshop hint author_solutions 2"
 
 [[exercises]]
 name = "author_gate"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Enforce catalog-size and manifest constraints before validating starters and solutions.\n2. Read the surrounding implementation and its callers in src/dev/check.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Enforce catalog-size and manifest constraints before validating starters and solutions. Focus on check in src/dev/check.rs.\nFor a narrower diagnostic: rustlings workshop hint author_gate 2\nFor the strongest hint: rustlings workshop hint author_gate 3\nIn this checkout use cargo run --locked -- workshop hint author_gate 2"
 
 [[exercises]]
 name = "author_directories"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Create a relative project directory and attach its path to any failure.\n2. Read the surrounding implementation and its callers in src/dev/new.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Create a relative project directory and attach its path to any failure. Focus on create_rel_dir in src/dev/new.rs.\nFor a narrower diagnostic: rustlings workshop hint author_directories 2\nFor the strongest hint: rustlings workshop hint author_directories 3\nIn this checkout use cargo run --locked -- workshop hint author_directories 2"
 
 [[exercises]]
 name = "author_files"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Write generated project content to the named relative file and retain actionable error context.\n2. Read the surrounding implementation and its callers in src/dev/new.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Write generated project content to the named relative file and retain actionable error context. Focus on write_rel_file in src/dev/new.rs.\nFor a narrower diagnostic: rustlings workshop hint author_files 2\nFor the strongest hint: rustlings workshop hint author_files 3\nIn this checkout use cargo run --locked -- workshop hint author_files 2"
 
 [[exercises]]
 name = "author_new_course"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore one community-course initialization stage, including the original optional Git behavior.\n2. Read the surrounding implementation and its callers in src/dev/new.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore one community-course initialization stage, including the original optional Git behavior. Focus on new in src/dev/new.rs.\nFor a narrower diagnostic: rustlings workshop hint author_new_course 2\nFor the strongest hint: rustlings workshop hint author_new_course 3\nIn this checkout use cargo run --locked -- workshop hint author_new_course 2"
 
 [[exercises]]
 name = "author_update_manifest"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Regenerate only the bin list and preserve the rest of the existing manifest.\n2. Read the surrounding implementation and its callers in src/dev/update.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Regenerate only the bin list and preserve the rest of the existing manifest. Focus on update_cargo_toml in src/dev/update.rs.\nFor a narrower diagnostic: rustlings workshop hint author_update_manifest 2\nFor the strongest hint: rustlings workshop hint author_update_manifest 3\nIn this checkout use cargo run --locked -- workshop hint author_update_manifest 2"
 
 [[exercises]]
 name = "author_update"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Update the proper manifest for official development or a community course without redesigning either workflow.\n2. Read the surrounding implementation and its callers in src/dev/update.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Update the proper manifest for official development or a community course without redesigning either workflow. Focus on update in src/dev/update.rs.\nFor a narrower diagnostic: rustlings workshop hint author_update 2\nFor the strongest hint: rustlings workshop hint author_update 3\nIn this checkout use cargo run --locked -- workshop hint author_update 2"
 
 [[exercises]]
 name = "author_dispatch"
 dir = "09_authoring"
 test = true
 strict_clippy = true
-hint = "1. Contract: Dispatch New, Check, and Update through their original handlers and preserve the debug-build restriction.\n2. Read the surrounding implementation and its callers in src/dev.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Dispatch New, Check, and Update through their original handlers and preserve the debug-build restriction. Focus on run in src/dev.rs.\nFor a narrower diagnostic: rustlings workshop hint author_dispatch 2\nFor the strongest hint: rustlings workshop hint author_dispatch 3\nIn this checkout use cargo run --locked -- workshop hint author_dispatch 2"
 
 [[exercises]]
 name = "embedded_macro"
 dir = "10_launch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore a stage of the real procedural macro: ordered exercises, solutions, directory indices, inputs, and READMEs must remain aligned.\n2. Read the surrounding implementation and its callers in rustlings-macros/src/lib.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore a stage of the real procedural macro: ordered exercises, solutions, directory indices, inputs, and READMEs must remain aligned. Focus on include_files in rustlings-macros/src/lib.rs.\nFor a narrower diagnostic: rustlings workshop hint embedded_macro 2\nFor the strongest hint: rustlings workshop hint embedded_macro 3\nIn this checkout use cargo run --locked -- workshop hint embedded_macro 2"
 
 [[exercises]]
 name = "launch_dispatch"
 dir = "10_launch"
 test = true
 strict_clippy = true
-hint = "1. Contract: Restore the missing launch stage, preserving priority commands, initialization checks, normal CLI dispatch, and exit status. Then reconstruct and run the complete checker.\n2. Read the surrounding implementation and its callers in src/main.rs. Follow inputs, state changes, errors, and the returned value separately.\n3. This is a TODO mission. Replace the todo! step with real code. Values used below the gap tell you which bindings or state changes that step must produce.\nThe canonical solution is revealed after completion. The source map and architecture record are in exercises/README.md."
+hint = "Restore the missing launch stage, preserving priority commands, initialization checks, normal CLI dispatch, and exit status. Then reconstruct and run the complete checker. Focus on main in src/main.rs.\nFor a narrower diagnostic: rustlings workshop hint launch_dispatch 2\nFor the strongest hint: rustlings workshop hint launch_dispatch 3\nIn this checkout use cargo run --locked -- workshop hint launch_dispatch 2"

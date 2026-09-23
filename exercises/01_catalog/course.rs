@@ -92,6 +92,41 @@ fn audit(binary: &PathBuf) -> Result<()> {
 
 fn main() -> Result<()> {
     let mode = std::env::args().nth(1).unwrap_or_else(|| "doctor".into());
+    if mode == "hint" {
+        let name = std::env::args()
+            .nth(2)
+            .ok_or("usage: workshop hint MISSION [1|2|3]")?;
+        let level: usize = std::env::args()
+            .nth(3)
+            .unwrap_or_else(|| "1".into())
+            .parse()?;
+        if !(1..=3).contains(&level) {
+            return Err("Hint level must be 1, 2, or 3".into());
+        }
+        let hints = fs::read_to_string("exercises/01_catalog/hints.tsv")?;
+        let fields: Vec<_> = hints
+            .lines()
+            .find(|line| line.split('\t').next() == Some(name.as_str()))
+            .ok_or("Unknown mission name")?
+            .split('\t')
+            .collect();
+        let mut chars = fields.get(level).ok_or("Missing hint level")?.chars();
+        let mut text = String::new();
+        while let Some(c) = chars.next() {
+            text.push(if c == '\\' {
+                match chars.next() {
+                    Some('n') => '\n',
+                    Some('t') => '\t',
+                    Some('\\') => '\\',
+                    _ => return Err("Invalid hint escape".into()),
+                }
+            } else {
+                c
+            });
+        }
+        println!("{name} — hint {level}/3\n{text}");
+        return Ok(());
+    }
     if mode == "info" {
         println!(
             "Rebuild the Checker course 1 (QuasarRay/rustlings)\n112 restoration missions; course Rust >=1.89; original engine Rust >=1.88\nReference: a650509c789da1656f813392b16aa1fa043b7f3e\nDistribution: source checkout; not the upstream crates.io curriculum"
@@ -170,7 +205,11 @@ fn main() -> Result<()> {
                 "run", "1.89.0", "cargo", "run", "--locked", "--", "workshop", "audit",
             ]))?;
         }
-        _ => return Err("usage: course doctor|info|prepare|audit|smoke|release".into()),
+        _ => {
+            return Err(
+                "usage: course doctor|info|hint MISSION [LEVEL]|prepare|audit|smoke|release".into(),
+            );
+        }
     }
     Ok(())
 }

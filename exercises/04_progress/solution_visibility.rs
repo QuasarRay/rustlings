@@ -18,8 +18,25 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
     pub fn current_solution_path(&self) -> Result<Option<String>> {
-        // TODO: Implement this operation using the contract above.
-        todo!("solution_visibility")
+        if cfg!(debug_assertions) {
+            return Ok(None);
+        }
+
+        let current_exercise = self.current_exercise();
+
+        if self.official_exercises {
+            EMBEDDED_FILES
+                .write_solution_to_disk(self.current_exercise_ind, current_exercise.name)
+                .map(Some)
+        } else {
+            let sol_path = todo!("solution_visibility");
+
+            if Path::new(&sol_path).exists() {
+                return Ok(Some(sol_path));
+            }
+
+            Ok(None)
+        }
     }
 // END RUSTLINGS REPAIR
     };

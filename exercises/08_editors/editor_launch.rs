@@ -22,8 +22,42 @@ macro_rules! repair {
         exercise_ind: usize,
         exercise_path: &'static str,
     ) -> Result<EditorJoinHandle> {
-        // TODO: Implement this operation using the contract above.
-        todo!("editor_launch")
+        let handle = thread::Builder::new()
+            .spawn(move || {
+                match &mut self {
+                    Editor::Cmd(program, args) => {
+                        todo!("editor_launch");
+                    }
+                    Editor::Zellij(open_pane) => {
+                        if let Some((pane_id_str, pane_id, open_exercise_ind)) = open_pane {
+                            if *open_exercise_ind == exercise_ind {
+                                if zellij::pane_open(*pane_id)? {
+                                    return Ok(self);
+                                }
+                            } else {
+                                zellij::close_pane(pane_id_str)?;
+                            }
+                        }
+
+                        let stdout = run_cmd(
+                            Command::new("zellij")
+                                .arg("action")
+                                .arg("edit")
+                                .arg(exercise_path),
+                        )?;
+
+                        let (pane_id_str, pane_id) = zellij::parse_pane_id(&stdout)
+                            .context("Failed to parse the ID of the new Zellij pane")?;
+
+                        *open_pane = Some((pane_id_str, pane_id, exercise_ind));
+                    }
+                }
+
+                Ok(self)
+            })
+            .context("Failed to spawn a thread to open the editor")?;
+
+        Ok(EditorJoinHandle(Some(handle)))
     }
 // END RUSTLINGS REPAIR
     };
