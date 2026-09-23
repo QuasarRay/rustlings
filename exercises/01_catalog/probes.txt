@@ -61,6 +61,23 @@ fn subprocess_nonzero_is_failure_with_or_without_capture() {
 
 }
 
+src/dev.rs	470
+
+
+#[cfg(test)]
+mod workshop_author_dispatch_contracts {
+    use super::*;
+    #[test]
+    fn debug_new_is_rejected_and_update_errors_reach_the_caller() {
+        let _cwd=crate::workshop_test_support::cwd(false);
+        assert!(DevCommand::New{path:"new".into(),no_git:true}.run().is_err());
+        assert!(!std::path::Path::new("new").exists());
+        std::fs::write("info.toml","broken TOML").unwrap();
+        assert!(DevCommand::Update.run().is_err());
+    }
+}
+
+
 src/dev/check.rs	311
 
 #[cfg(test)]
@@ -74,6 +91,78 @@ fn author_names_allow_letters_numbers_and_underscores() {
 }
 
 }
+
+src/dev/new.rs	985
+
+
+#[cfg(test)]
+mod workshop_author_creation_contracts {
+    use super::*;
+    #[test]
+    fn community_creation_materializes_all_assets_and_rejects_collisions() {
+        let cwd=crate::workshop_test_support::cwd(false);
+        create_rel_dir("occupied",".").unwrap();assert!(create_rel_dir("occupied",".").is_err());
+        write_rel_file("sample",".",b"exact").unwrap();assert_eq!(fs::read("sample").unwrap(),b"exact");
+        assert!(write_rel_file("missing/file",".",b"x").is_err());
+        new(Path::new("course"),true).unwrap();
+        for path in ["info.toml","Cargo.toml","README.md",".gitignore","rust-analyzer.toml",".vscode/extensions.json"] {assert!(Path::new(path).is_file(),"{path}");}
+        assert!(Path::new("exercises").is_dir());assert!(Path::new("solutions").is_dir());assert!(!Path::new(".git").exists());
+        assert!(fs::read_to_string("Cargo.toml").unwrap().contains("bin = []"));
+        assert!(new(Path::new("."),true).is_err());drop(cwd);
+    }
+}
+
+
+src/dev/update.rs	1138
+
+
+#[cfg(test)]
+mod workshop_author_update_contracts {
+    use super::*;
+    #[test]
+    fn updating_changes_only_targets_and_propagates_invalid_input() {
+        let _cwd=crate::workshop_test_support::cwd(false);
+        fs::write("Cargo.toml","bin = []\n[package]\nname = \"preserved\"\n").unwrap();
+        let exercises=vec![crate::workshop_test_support::info("alpha")];
+        update_cargo_toml(&exercises,"Cargo.toml",b"../").unwrap();
+        let text=fs::read_to_string("Cargo.toml").unwrap();assert!(text.contains("../exercises/alpha.rs"));assert!(text.contains("preserved"));
+        fs::write("Cargo.toml","invalid").unwrap();assert!(update_cargo_toml(&exercises,"Cargo.toml",b"").is_err());
+        fs::write("info.toml","format_version=1\n[[exercises]]\nname=\"alpha\"\nhint=\"x\"\n").unwrap();
+        fs::create_dir("dev").unwrap();fs::write("dev/Cargo.toml","bin = []\n[package]\nname = \"x\"\n").unwrap();
+        fs::create_dir("solutions").unwrap();fs::write("solutions/alpha.rs","fn main() {}").unwrap();
+        update().unwrap();assert!(fs::read_to_string("dev/Cargo.toml").unwrap().contains("alpha_sol"));
+    }
+}
+
+
+src/editor.rs	1392
+
+
+#[cfg(test)]
+mod workshop_editor_contracts {
+    use super::*;
+    #[test]
+    fn command_status_discovery_and_quoted_selection() {
+        assert!(program_exists("rustc")); assert!(!program_exists("rustlings_missing_editor_938117"));
+        assert!(!run_cmd(Command::new("rustc").arg("--version")).unwrap().is_empty());
+        assert!(run_cmd(Command::new("rustc").arg("--no-such-rustlings-option")).is_err());
+        let Some(Editor::Cmd(program,args))=Editor::new(Some("editor 'two words' --wait".into()),false).unwrap() else {panic!("expected command editor")};
+        assert_eq!(program,"editor"); assert_eq!(args,["two words","--wait"]);
+        assert!(Editor::new(Some(String::new()),false).is_err());
+        assert!(Editor::new(Some("editor 'unfinished".into()),false).is_err());
+    }
+    #[test]
+    fn asynchronous_open_join_and_optional_close() {
+        assert!(EditorJoinHandle::default().join().unwrap().is_none());
+        let mut editor=Editor::Cmd(Cow::Borrowed("rustc"),vec!["--version".into()]);
+        editor.close().unwrap();
+        let handle=editor.open(0,"exercise.rs").unwrap();assert!(matches!(handle.join().unwrap(),Some(Editor::Cmd(_, _))));
+        let bad=Editor::Cmd(Cow::Borrowed("rustlings_missing_editor_938117"),vec![]);
+        assert!(bad.open(0,"exercise.rs").unwrap().join().is_err());
+        Editor::Zellij(None).close().unwrap();
+    }
+}
+
 
 src/editor/zellij.rs	296
 
@@ -162,6 +251,38 @@ fn local_catalog_is_validated_without_silent_fallback() {
 
 }
 
+src/list.rs	1311
+
+
+#[cfg(test)]
+mod crossterm {
+    pub use ::crossterm::*;
+    pub mod terminal {
+        pub use ::crossterm::terminal::*;
+        pub fn enable_raw_mode()->std::io::Result<()> {Ok(())}
+        pub fn disable_raw_mode()->std::io::Result<()> {Ok(())}
+    }
+    pub mod event {
+        pub use ::crossterm::event::*;
+        pub static EVENTS: std::sync::Mutex<std::collections::VecDeque<Event>>=std::sync::Mutex::new(std::collections::VecDeque::new());
+        pub fn read()->std::io::Result<Event> {EVENTS.lock().unwrap().pop_front().ok_or_else(||std::io::Error::other("script exhausted"))}
+    }
+}
+#[cfg(test)]
+mod workshop_list_event_contracts {
+    use super::*;
+    fn keys(keys:&[char]) { *event::EVENTS.lock().unwrap()=keys.iter().map(|&c|Event::Key(event::KeyEvent::new(KeyCode::Char(c),event::KeyModifiers::NONE))).collect(); }
+    #[test]
+    fn keyboard_continue_commits_selection_and_read_errors_propagate() {
+        let (_cwd,mut app)=crate::workshop_test_support::app();
+        keys(&['j','c']);handle_list(&mut app,&mut io::stdout().lock()).unwrap();assert_eq!(app.current_exercise_ind(),1);
+        keys(&['p','s','g']);assert!(handle_list(&mut app,&mut io::stdout().lock()).is_err());
+        keys(&['q']);list(&mut app).unwrap();
+        keys(&[]);assert!(list(&mut app).is_err());
+    }
+}
+
+
 src/list/scroll_state.rs	841
 
 #[cfg(test)]
@@ -183,6 +304,60 @@ fn resize_and_viewport_preserve_a_valid_visible_selection() {
 }
 
 }
+
+src/list/state.rs	2793
+
+
+#[cfg(test)]
+mod crossterm {
+    pub use ::crossterm::*;
+    pub mod terminal {
+        pub use ::crossterm::terminal::*;
+        pub fn size()->std::io::Result<(u16,u16)> {Ok((80,24))}
+    }
+}
+#[cfg(test)]
+mod workshop_list_contracts {
+    use super::*;
+    #[test]
+    fn filtering_search_and_selection_map_to_original_indices() {
+        let (_cwd,mut app)=crate::workshop_test_support::app();
+        app.set_status(1,true).unwrap();
+        let mut out=io::stdout().lock();
+        let mut state=ListState::build(&mut app,&mut out).unwrap();
+        assert_eq!((state.term_width,state.term_height),(80,24));
+        state.set_filter(Filter::Done);
+        assert_eq!(state.selected_to_exercise_ind(0).unwrap(),1);
+        assert!(state.selected_to_exercise_ind(1).is_err());
+        state.search_query="beta".into(); state.apply_search_query();
+        assert_eq!(state.scroll_state.selected(),Some(0));
+        assert!(state.selected_to_current_exercise().unwrap());
+        assert_eq!(state.app_state.current_exercise_ind(),1);
+        state.set_filter(Filter::Pending);
+        assert_eq!(state.selected_to_exercise_ind(0).unwrap(),0);
+        assert_eq!(state.selected_to_exercise_ind(1).unwrap(),2);
+        state.search_query="gamma".into();state.apply_search_query();assert_eq!(state.scroll_state.selected(),Some(1));
+        state.search_query="absent".into();state.apply_search_query();assert!(state.message.contains("not found"));
+        state.set_term_size(10,2);assert!(!state.show_footer);assert_eq!(state.scroll_state.max_n_rows_to_display(),1);
+        state.draw(&mut out).unwrap();
+        state.set_term_size(80,24);assert!(state.show_footer);state.draw(&mut out).unwrap();
+        state.set_term_size(0,0);state.draw(&mut out).unwrap();
+    }
+    #[test]
+    fn empty_filter_never_selects_or_resets_an_unrelated_exercise() {
+        let (_cwd,mut app)=crate::workshop_test_support::app();let mut out=io::stdout().lock();
+        let mut state=ListState::build(&mut app,&mut out).unwrap();state.set_filter(Filter::Done);
+        assert!(state.scroll_state.selected().is_none());
+        assert!(!state.selected_to_current_exercise().unwrap());state.reset_selected().unwrap();
+        assert!(state.message.contains("Nothing selected"));assert_eq!(state.app_state.n_done(),0);
+        state.set_filter(Filter::None);state.select_last();assert_eq!(state.scroll_state.selected(),Some(2));
+        state.select_first();state.select_next();assert_eq!(state.scroll_state.selected(),Some(1));
+        state.select_previous();assert_eq!(state.scroll_state.selected(),Some(0));
+        state.search_query="al".into();state.draw(&mut out).unwrap();
+        let rows=state.draw_rows(&mut out,state.app_state.exercises().iter().enumerate()).unwrap();assert_eq!(rows,3);
+    }
+}
+
 
 src/main.rs	2305
 
@@ -222,6 +397,44 @@ mod workshop_test_support {
         (cwd,state)
     }
 }
+
+src/term.rs	1824
+
+
+#[cfg(test)]
+mod workshop_terminal_contracts {
+    use super::*;
+    #[test]
+    fn bounded_ascii_unicode_and_reserved_width() {
+        let mut out=io::stdout().lock();
+        let mut w=MaxLenWriter::new(&mut out,3);
+        w.write_ascii(b"abcd").unwrap(); assert_eq!(w.len,3);
+        w.write_ascii(b"overflow").unwrap(); assert_eq!(w.len,3);
+        let mut w=MaxLenWriter::new(&mut out,2);
+        w.write_str("λ").unwrap(); assert_eq!(w.len,1);
+        w.add_to_len(1); w.write_str("overflow").unwrap(); assert_eq!(w.len,2);
+        let mut zero=MaxLenWriter::new(&mut out,0);
+        zero.write_ascii(b"x").unwrap(); zero.write_str("λ").unwrap(); assert_eq!(zero.len,0);
+    }
+    #[test]
+    fn progress_count_paths_links_and_ansi_preserve_contracts() {
+        let cwd=crate::workshop_test_support::cwd(false);
+        fs::write("present.rs","x").unwrap();
+        assert!(canonicalize("present.rs").unwrap().ends_with("present.rs"));
+        assert!(canonicalize("absent.rs").is_none());
+        let mut out=io::stdout().lock();
+        {let mut c=ProgressCounter::new(&mut out,2).unwrap();c.increment().unwrap();assert_eq!((c.counter,c.total),(1,2));}
+        let mut w=MaxLenWriter::new(&mut out,80);
+        progress_bar(&mut w,1,3,8).unwrap(); assert_eq!(w.len,13);
+        progress_bar(&mut w,0,3,80).unwrap(); progress_bar(&mut w,3,3,80).unwrap();
+        let mut called=false; file_path(&mut w,Color::Green,|_| {called=true;Ok(())}).unwrap(); assert!(called);
+        assert!(file_path(&mut w,Color::Green,|_| Err(io::Error::other("write failed"))).is_err());
+        let before=w.len; terminal_file_link(&mut w,"visible","/tmp/target.rs").unwrap();assert_eq!(w.len,before+7);
+        let mut ansi=Vec::new();write_ansi(&mut ansi,MoveTo(0,0));assert_eq!(ansi,b"\x1b[1;1H");
+        drop(cwd);
+    }
+}
+
 
 src/watch.rs	306
 
@@ -271,4 +484,36 @@ fn only_completed_statuses_allow_advancing() {
 }
 
 }
+
+src/watch/terminal_event.rs	1798
+
+
+#[cfg(test)]
+mod crossterm {
+    pub mod event {
+        pub use ::crossterm::event::*;
+        pub static EVENTS: std::sync::Mutex<std::collections::VecDeque<Event>>=std::sync::Mutex::new(std::collections::VecDeque::new());
+        pub fn read()->std::io::Result<Event> {EVENTS.lock().unwrap().pop_front().ok_or_else(||std::io::Error::other("script exhausted"))}
+    }
+}
+#[cfg(test)]
+mod workshop_input_contracts {
+    use super::*;
+    #[test]
+    fn terminal_events_honor_manual_mode_pause_and_final_transition() {
+        use std::sync::mpsc::channel;
+        let key=|c|Event::Key(event::KeyEvent::new(KeyCode::Char(c),event::KeyModifiers::NONE));
+        *event::EVENTS.lock().unwrap()=[key('r'),key('x'),Event::Resize(90,20),key('n'),key('q')].into();
+        let (tx,rx)=channel();let (resume,paused)=channel();resume.send(()).unwrap();
+        EXERCISE_RUNNING.store(false,Relaxed);terminal_event_handler(tx,paused,true);
+        let events:Vec<_>=rx.try_iter().collect();
+        assert!(matches!(events.as_slice(),[WatchEvent::Input(InputEvent::Run),WatchEvent::Input(InputEvent::Reset),WatchEvent::TerminalResize{width:90},WatchEvent::Input(InputEvent::Next),WatchEvent::Input(InputEvent::Quit)]));
+        *event::EVENTS.lock().unwrap()=[key('r'),key('l')].into();let(tx,rx)=channel();let(_tx,paused)=channel();
+        terminal_event_handler(tx,paused,false);assert!(matches!(rx.recv().unwrap(),WatchEvent::Input(InputEvent::List)));assert!(rx.try_recv().is_err());
+        *event::EVENTS.lock().unwrap()=[key('n')].into();let(tx,rx)=channel();let(_tx,paused)=channel();
+        EXERCISE_RUNNING.store(true,Relaxed);terminal_event_handler(tx,paused,true);EXERCISE_RUNNING.store(false,Relaxed);
+        assert!(matches!(rx.recv().unwrap(),WatchEvent::TerminalEventErr(_)));
+    }
+}
+
 
