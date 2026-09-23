@@ -279,7 +279,7 @@ mod workshop_author_update_contracts {
 }
 
 
-src/editor.rs	1392
+src/editor.rs	3948
 
 
 #[cfg(test)]
@@ -307,6 +307,52 @@ mod workshop_editor_contracts {
     }
 }
 
+
+#[cfg(test)]
+mod workshop_zellij_process_contracts {
+    use super::*;
+    #[test]
+    fn pane_queries_reuse_and_close_real_child_processes() {
+        if std::env::var_os("WORKSHOP_FAKE_ZELLIJ_CHILD").is_some() {
+            assert!(zellij::pane_open(17).unwrap());
+            assert!(!zellij::pane_open(99).unwrap());
+            let editor = Editor::Zellij(None).open(0, "alpha.rs").unwrap().join().unwrap().unwrap();
+            let editor = editor.open(0, "alpha.rs").unwrap().join().unwrap().unwrap();
+            let mut editor = editor.open(1, "beta.rs").unwrap().join().unwrap().unwrap();
+            editor.close().unwrap();
+            return;
+        }
+        let fixture = tempfile::tempdir().unwrap();
+        let src = fixture.path().join("zellij.rs");
+        std::fs::write(&src, r##"
+use std::{env,fs::OpenOptions,io::Write};
+fn main() {
+    let args:Vec<_>=env::args().skip(1).collect();
+    let mut log=OpenOptions::new().create(true).append(true).open(env::var_os("WORKSHOP_ZELLIJ_LOG").unwrap()).unwrap();
+    writeln!(log,"{}",args.join(" ")).unwrap();
+    match args.get(1).map(String::as_str) {
+        Some("list-panes")=>println!("[{{\"id\":17}}]"),
+        Some("edit")=>println!("terminal_17"),
+        Some("close-pane")=>(),
+        _=>std::process::exit(2),
+    }
+}
+"##).unwrap();
+        let compiled = Command::new("rustc").arg("--edition=2024").arg(&src).arg("--out-dir").arg(fixture.path()).output().unwrap();
+        assert!(compiled.status.success(), "{}", String::from_utf8_lossy(&compiled.stderr));
+        let mut paths = vec![fixture.path().to_path_buf()];
+        paths.extend(std::env::split_paths(&std::env::var_os("PATH").unwrap()));
+        let log = fixture.path().join("calls.txt");
+        let output = Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "editor::workshop_zellij_process_contracts::pane_queries_reuse_and_close_real_child_processes", "--nocapture"])
+            .env("WORKSHOP_FAKE_ZELLIJ_CHILD", "1")
+            .env("WORKSHOP_ZELLIJ_LOG", &log)
+            .env("PATH", std::env::join_paths(paths).unwrap()).output().unwrap();
+        assert!(output.status.success(), "{}\n{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        let calls = std::fs::read_to_string(log).unwrap();
+        assert_eq!(calls.lines().collect::<Vec<_>>(), ["action list-panes -j", "action list-panes -j", "action edit alpha.rs", "action list-panes -j", "action close-pane -p 17", "action edit beta.rs", "action close-pane -p 17"]);
+    }
+}
 
 src/editor/zellij.rs	296
 
