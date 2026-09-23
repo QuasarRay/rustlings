@@ -1,0 +1,274 @@
+RUSTLINGS_WORKSHOP_V1
+src/app_state.rs	1877
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn completion_accounting_is_idempotent_and_reversible() {
+    let (_cwd,mut app)=crate::workshop_test_support::app();
+    assert_eq!((app.n_done(),app.n_pending()),(0,3));
+    assert!(app.set_status(1,true).unwrap());assert_eq!((app.n_done(),app.n_pending()),(1,2));
+    assert!(!app.set_status(1,true).unwrap());assert_eq!(app.n_done(),1);
+    assert!(app.set_status(1,false).unwrap());assert_eq!((app.n_done(),app.n_pending()),(0,3));
+    assert!(app.set_status(3,true).is_err());
+}
+#[test]
+fn state_round_trip_restores_names_counts_and_current_index() {
+    let (_cwd,mut app)=crate::workshop_test_support::app();
+    app.set_status(0,true).unwrap();app.set_status(2,true).unwrap();app.set_current_exercise_ind(1).unwrap();
+    app.write().unwrap();drop(app);
+    let (mut app,status)=AppState::new(vec![crate::workshop_test_support::info("alpha"),crate::workshop_test_support::info("beta"),crate::workshop_test_support::info("gamma")],String::new(),None,false).unwrap();
+    assert!(matches!(status,StateFileStatus::Read));assert_eq!((app.current_exercise_ind(),app.n_done(),app.n_pending()),(1,2,1));
+    app.set_pending(2).unwrap();app.set_pending(0).unwrap();app.write().unwrap();
+    let saved=std::fs::read_to_string(STATE_FILE_NAME).unwrap();assert!(!saved.lines().any(|s|s=="gamma"));
+    assert!(app.set_current_exercise_ind(3).is_err());assert!(app.set_current_exercise_by_name("absent").is_err());
+}
+#[test]
+fn pending_search_returns_global_indices_and_wraps() {
+    let (_cwd,mut app)=crate::workshop_test_support::app();
+    app.set_current_exercise_ind(1).unwrap();assert_eq!(app.next_pending_exercise_ind(),Some(2));
+    app.set_status(2,true).unwrap();assert_eq!(app.next_pending_exercise_ind(),Some(0));
+    app.set_status(0,true).unwrap();assert_eq!(app.next_pending_exercise_ind(),None);
+}
+
+}
+
+src/cmd.rs	897
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn cargo_argv_preserves_subcommand_binary_and_tail() {
+    let runner=CmdRunner{target_dir:std::path::PathBuf::from("sandbox")};
+    let mut c=runner.cargo("test","quest",None); c.args(["--","--nocapture"]);
+    let a:Vec<_>=c.cmd.get_args().map(|a|a.to_string_lossy().into_owned()).collect();
+    assert_eq!(&a[..4],["test","-q","--bin","quest"]);
+    assert_eq!(&a[a.len()-2..],["--","--nocapture"]);
+}
+#[test]
+fn subprocess_nonzero_is_failure_with_or_without_capture() {
+    for capture in [false,true] {
+        let mut cmd=Command::new(std::env::current_exe().unwrap());cmd.arg("--definitely-not-a-test-harness-option");
+        let mut output=Vec::new();
+        assert!(!run_cmd(cmd,"intentional failing child",None,if capture{Some(&mut output)}else{None}).unwrap());
+        if capture{assert!(!output.is_empty());}
+    }
+}
+
+}
+
+src/dev/check.rs	311
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn author_names_allow_letters_numbers_and_underscores() {
+    for name in ["quest_01","A1","alpha"] {assert_eq!(forbidden_char(name),None);}
+    assert_eq!(forbidden_char("bad-name"),Some('-'));assert_eq!(forbidden_char("bad name"),Some(' '));
+}
+
+}
+
+src/editor/zellij.rs	296
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn pane_ids_are_decimal_not_hexadecimal() {
+    assert_eq!(parse_pane_id(b"terminal_123\n"),Some(("123".into(),123)));
+    assert_eq!(parse_pane_id(b"terminal_0\n"),Some(("0".into(),0)));
+    assert_eq!(parse_pane_id(b""),None);
+}
+
+}
+
+src/embedded.rs	872
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn directory_creation_accepts_existing_directory() {
+    let cwd=crate::workshop_test_support::cwd(false);
+    create_dir_if_not_exists(cwd.dir.path().to_str().unwrap()).unwrap();
+    std::fs::write("occupied","file").unwrap();
+    assert!(create_dir_if_not_exists("missing/child").is_err());
+}
+#[test]
+fn chapter_readme_and_restored_source_keep_original_paths() {
+    let _cwd=crate::workshop_test_support::cwd(false);std::fs::create_dir("exercises").unwrap();
+    let d=ExerciseDir{name:"chapter",readme:b"chapter guide"};d.init_on_disk().unwrap();
+    assert_eq!(std::fs::read("exercises/chapter/README.md").unwrap(),b"chapter guide");
+    EMBEDDED_FILES.write_exercise_to_disk(0,"restored.rs").unwrap();
+    assert_eq!(std::fs::read("restored.rs").unwrap(),EMBEDDED_FILES.exercise_files[0].exercise);
+}
+
+}
+
+src/exercise.rs	935
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+fn sample(name:&'static str,test:bool)->Exercise {
+    Exercise{name,dir:None,embedded_input_files:&[],path:"exercises/fixture.rs",canonical_path:None,test,strict_clippy:true,hint:"fixture".into(),done:false}
+}
+#[test]
+fn actual_checker_rejects_compile_test_and_runtime_failures() {
+    let _cwd=crate::workshop_test_support::cwd(true); let runner=CmdRunner::build().unwrap();
+    for (name,test,expected) in [("probe_ok",true,true),("probe_compile",false,false),("probe_tests",true,false),("probe_runtime",false,false)] {
+        let mut output=Vec::new();let result=sample(name,test).run_exercise(Some(&mut output),&runner).unwrap();
+        assert_eq!(result,expected,"{name}: {}",String::from_utf8_lossy(&output));
+    }
+    let mut output=Vec::new();assert!(sample("probe_ok",true).run_solution(Some(&mut output),&runner).unwrap(),"{}",String::from_utf8_lossy(&output));
+}
+
+}
+
+src/info_file.rs	1222
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn metadata_defaults_and_optional_paths() {
+    let root:ExerciseInfo=toml::de::from_str("name='quest'\nhint='look'\n").unwrap();
+    assert!(root.test); assert!(!root.strict_clippy); assert_eq!(root.path(),"exercises/quest.rs");
+    assert_eq!(root.sol_path(),"solutions/quest.rs");
+    let nested:ExerciseInfo=toml::de::from_str("name='quest'\ndir='chapter'\nhint='look'\ntest=false\nstrict_clippy=true\n").unwrap();
+    assert!(!nested.test); assert!(nested.strict_clippy);
+    assert_eq!(nested.path(),"exercises/chapter/quest.rs");assert_eq!(nested.sol_path(),"solutions/chapter/quest.rs");
+}
+#[test]
+fn local_catalog_is_validated_without_silent_fallback() {
+    let _cwd=crate::workshop_test_support::cwd(false);
+    assert!(!InfoFile::parse().unwrap().exercises.is_empty());
+    std::fs::write("info.toml","broken [").unwrap();assert!(InfoFile::parse().is_err());
+    std::fs::write("info.toml","format_version=1\nexercises=[]").unwrap();assert!(InfoFile::parse().is_err());
+    std::fs::write("info.toml","format_version=1\n[[exercises]]\nname='local'\nhint='look'").unwrap();
+    assert_eq!(InfoFile::parse().unwrap().exercises[0].name,"local");
+}
+
+}
+
+src/list/scroll_state.rs	841
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn initial_offset_and_previous_selection_do_not_underflow() {
+    let mut s=ScrollState::new(10,Some(2),5);assert_eq!(s.offset(),0);
+    s.select_previous();assert_eq!(s.selected(),Some(1));s.select_previous();s.select_previous();assert_eq!(s.selected(),Some(0));
+}
+#[test]
+fn resize_and_viewport_preserve_a_valid_visible_selection() {
+    let mut s=ScrollState::new(20,Some(18),3);s.set_max_n_rows_to_display(8);
+    assert_eq!(s.scroll_padding,2);assert!(s.offset()<=12);
+    s.set_n_rows(4);assert_eq!(s.selected(),Some(3));assert_eq!(s.offset(),0);
+    s.select_next();assert_eq!(s.selected(),Some(3));s.select_first();assert_eq!(s.selected(),Some(0));
+    s.set_n_rows(0);assert_eq!(s.selected(),None);s.select_next();s.select_previous();assert_eq!(s.selected(),None);
+}
+
+}
+
+src/main.rs	2305
+
+#[cfg(test)]
+mod workshop_test_support {
+    pub struct Cwd { previous: std::path::PathBuf, pub dir: tempfile::TempDir }
+    impl Drop for Cwd { fn drop(&mut self) { std::env::set_current_dir(&self.previous).unwrap(); } }
+    pub fn cwd(with_cargo: bool) -> Cwd {
+        let previous=std::env::current_dir().unwrap(); let dir=tempfile::tempdir().unwrap();
+        if with_cargo {
+            std::fs::create_dir_all(dir.path().join("dev")).unwrap();
+            std::fs::create_dir_all(dir.path().join("exercises")).unwrap();
+            let mut bins=String::new();
+            for (name,source) in [
+                ("probe_ok","fn main() {} #[test] fn works() { assert_eq!(2+2,4); }"),
+                ("probe_ok_sol","fn main() {} #[test] fn works() { assert_eq!(2+2,4); }"),
+                ("probe_runtime","fn main() { std::process::exit(7); }"),
+                ("probe_tests","fn main() {} #[test] fn broken() { panic!(\"contract failure\"); }"),
+                ("probe_compile","fn main() { missing_function(); }"),
+            ] {
+                std::fs::write(dir.path().join(format!("exercises/{name}.rs")),source).unwrap();
+                bins.push_str(&format!("[[bin]]\nname = {name:?}\npath = \"../exercises/{name}.rs\"\n"));
+            }
+            let manifest=format!("[package]\nname = \"workshop_fixture\"\nversion = \"0.0.0\"\nedition = \"2024\"\n{bins}");
+            std::fs::write(dir.path().join("dev/Cargo.toml"),&manifest).unwrap();
+            std::fs::write(dir.path().join("Cargo.toml"),manifest.replace("../exercises/","exercises/")).unwrap();
+            std::fs::write(dir.path().join("info.toml"),"format_version = 1\n[[exercises]]\nname=\"probe_ok\"\nhint=\"fixture\"\n").unwrap();
+        }
+        std::env::set_current_dir(dir.path()).unwrap(); Cwd { previous, dir }
+    }
+    pub fn info(name: &'static str) -> crate::info_file::ExerciseInfo<'static> {
+        crate::info_file::ExerciseInfo {name,dir:None,test:true,strict_clippy:false,input_files:vec![],hint:"fixture".into(),skip_check_unsolved:false}
+    }
+    pub fn app() -> (Cwd,crate::app_state::AppState) {
+        let cwd=cwd(true);
+        let (state,_)=crate::app_state::AppState::new(vec![info("alpha"),info("beta"),info("gamma")],String::new(),None,false).unwrap();
+        (cwd,state)
+    }
+}
+
+src/watch.rs	306
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn pause_guard_suppresses_events_and_resumes_on_drop() {
+    assert!(!EXERCISE_RUNNING.load(Relaxed));
+    {let _pause=InputPauseGuard::scoped_pause();assert!(EXERCISE_RUNNING.load(Relaxed));}
+    assert!(!EXERCISE_RUNNING.load(Relaxed));
+}
+
+}
+
+src/watch/notify_event.rs	628
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn a_rust_source_change_reaches_the_correct_mission() {
+    use notify::EventHandler;
+    let (tx,rx)=std::sync::mpsc::channel();let mut handler=NotifyEventHandler::build(tx,&[b"first",b"quest"]).unwrap();
+    let event=notify::Event::new(notify::EventKind::Modify(notify::event::ModifyKind::Data(notify::event::DataChange::Any)))
+        .add_path(std::path::PathBuf::from("some/chapter/quest.rs"));
+    handler.handle_event(Ok(event));
+    assert!(matches!(rx.recv_timeout(std::time::Duration::from_secs(2)).unwrap(),WatchEvent::FileChange{exercise_ind:1}));
+}
+
+}
+
+src/watch/state.rs	594
+
+#[cfg(test)]
+mod workshop_contracts {
+use super::*;
+
+#[test]
+fn only_completed_statuses_allow_advancing() {
+    let (_cwd,mut app)=crate::workshop_test_support::app();let(tx,_rx)=std::sync::mpsc::sync_channel(0);
+    let mut state=WatchState{app_state:&mut app,output:Vec::new(),show_hint:false,done_status:DoneStatus::Pending,manual_run:true,term_width:80,terminal_event_unpause_sender:tx};
+    assert!(!state.done());state.done_status=DoneStatus::DoneWithoutSolution;assert!(state.done());
+    state.done_status=DoneStatus::DoneWithSolution("solution.rs".into());assert!(state.done());
+}
+
+}
+
