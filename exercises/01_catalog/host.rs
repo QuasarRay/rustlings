@@ -12,6 +12,14 @@ pub fn enabled() -> bool {
         && Path::new("exercises/01_catalog/upstream.txt").is_file()
 }
 
+pub fn install_lockfile() -> Result<()> {
+    if enabled() {
+        std::fs::copy("exercises/01_catalog/exercises.lock", "Cargo.lock")
+            .context("Failed to install the course dependency lockfile")?;
+    }
+    Ok(())
+}
+
 pub fn run_command(
     mut cmd: Command,
     description: &str,

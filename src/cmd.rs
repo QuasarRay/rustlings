@@ -129,6 +129,10 @@ impl CmdRunner {
         let mut cmd = Command::new("cargo");
         cmd.arg(subcommand).arg("-q").arg("--bin").arg(bin_name);
 
+        if crate::workshop_host::enabled() {
+            cmd.arg("--locked");
+        }
+
         // A hack to make `cargo run` work when developing Rustlings.
         #[cfg(debug_assertions)]
         cmd.arg("--manifest-path")
