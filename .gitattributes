@@ -1,0 +1,5 @@
+# Source spans, repair markers and archive byte lengths are platform-independent.
+exercises/** text eol=lf
+solutions/** text eol=lf
+exercises/01_catalog/upstream.txt -text
+exercises/01_catalog/probes.txt -text
