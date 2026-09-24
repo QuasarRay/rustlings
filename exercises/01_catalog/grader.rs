@@ -176,6 +176,18 @@ fn reconcile(directory: &Path, files: &Files) -> Result<()> {
 
 fn environment_identity(root: &Path) -> Result<Vec<u8>> {
     let mut inputs = Files::new();
+    // Cargo launches adapters through rustup, while Rustlings also executes
+    // them directly. Track the selected toolchain, not proxy bookkeeping.
+    let sysroot = Command::new("rustc")
+        .args(["--print", "sysroot"])
+        .output()?;
+    if !sysroot.status.success() {
+        return fail("Could not resolve the Rust toolchain sysroot");
+    }
+    inputs.insert(
+        "rust-sysroot".into(),
+        str::from_utf8(&sysroot.stdout)?.trim().to_owned(),
+    );
     inputs.insert(
         "platform".into(),
         format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
@@ -184,7 +196,19 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
         let name = key.to_string_lossy();
         // Trace presentation never changes the checked source or prerequisites.
         // Child checks always record full traces; the display depth is separate.
-        if ["RUST_BACKTRACE", "RUST_LIB_BACKTRACE"].contains(&name.as_ref()) {
+        // Proxy labels and Cargo home defaults are represented by the resolved
+        // sysroot and cargo-home inputs instead of their launch-time spelling.
+        if [
+            "RUST_BACKTRACE",
+            "RUST_LIB_BACKTRACE",
+            "RUSTUP_HOME",
+            "RUSTUP_TOOLCHAIN",
+            "RUSTUP_TOOLCHAIN_SOURCE",
+            "RUST_RECURSION_COUNT",
+            "CARGO_HOME",
+        ]
+        .contains(&name.as_ref())
+        {
             continue;
         }
         if name.starts_with("RUST")
@@ -224,6 +248,8 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
         .or_else(|| std::env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
         .or_else(|| std::env::var_os("USERPROFILE").map(|p| PathBuf::from(p).join(".cargo")))
     {
+        let home = home.canonicalize().unwrap_or(home);
+        inputs.insert("cargo-home".into(), format!("{home:?}"));
         directories.push(home.parent().unwrap_or(&home).to_path_buf());
         for name in ["config", "config.toml"] {
             let path = home.join(name);
@@ -1177,6 +1203,53 @@ mod verifier_tests {
         }
         assert!(identities[..4].iter().all(|id| id == &identities[0]));
         assert_ne!(identities[0], identities[4]);
+    }
+    #[test]
+    fn cargo_and_direct_adapter_environments_share_identity() {
+        let tmp = Scratch::new();
+        write_changed(
+            &tmp.0.join("Cargo.toml"),
+            b"[package]\nname='environment_probe'\nversion='0.0.0'\nedition='2024'\n[workspace]\n",
+        )
+        .unwrap();
+        write_changed(&tmp.0.join("src/main.rs"), br#"
+fn main() {
+    let status = std::process::Command::new(std::env::var_os("WORKSHOP_TEST_EXE").unwrap())
+        .args(["--exact", "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity", "--nocapture"])
+        .status().unwrap();
+    std::process::exit(status.code().unwrap_or(2));
+}
+"#).unwrap();
+        let mut direct = Command::new(std::env::current_exe().unwrap());
+        direct.args([
+            "--exact",
+            "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity",
+            "--nocapture",
+        ]);
+        let mut cargo = Command::new("cargo");
+        cargo
+            .args(["run", "--offline", "--quiet", "--manifest-path"])
+            .arg(tmp.0.join("Cargo.toml"));
+        let mut identities = Vec::new();
+        for cmd in [&mut direct, &mut cargo] {
+            cmd.env("WORKSHOP_ENVIRONMENT_TEST_ROOT", &tmp.0)
+                .env("WORKSHOP_TEST_EXE", std::env::current_exe().unwrap())
+                .env("CARGO_TARGET_DIR", tmp.0.join("target"));
+            let (status, output) = process::capture(cmd, Duration::from_secs(60)).unwrap();
+            let output = String::from_utf8(output).unwrap();
+            assert!(status.success(), "{output}");
+            identities.push(
+                output
+                    .lines()
+                    .find_map(|l| l.strip_prefix("ENVIRONMENT_ID="))
+                    .expect("identity probe did not run")
+                    .to_owned(),
+            );
+        }
+        assert_eq!(
+            identities[0], identities[1],
+            "Cargo's proxy environment must not relock a directly certified repair"
+        );
     }
     #[test]
     fn a_persisted_tool_failure_does_not_block_retrying_unchanged_source() {
