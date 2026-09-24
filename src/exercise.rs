@@ -183,8 +183,15 @@ pub trait RunnableExercise {
 
     /// Compile, check and run the exercise.
     /// The output is written to the `output` buffer after clearing it.
-    fn run_exercise(&self, output: Option<&mut Vec<u8>>, cmd_runner: &CmdRunner) -> Result<bool> {
-        self.run::<false>(self.name(), output, cmd_runner)
+    fn run_exercise(
+        &self,
+        mut output: Option<&mut Vec<u8>>,
+        cmd_runner: &CmdRunner,
+    ) -> Result<bool> {
+        if !self.run::<false>(self.name(), output.as_deref_mut(), cmd_runner)? {
+            return Ok(false);
+        }
+        crate::external_assessment::check(self.name(), output)
     }
 
     /// Compile, check and run the exercise's solution.
