@@ -133,7 +133,6 @@ The host fork adds a course-specific subprocess policy and maintenance command. 
 
 The [audit review](audit-review.md) maps every finding to evidence, remediation, or a justified boundary. The [maintenance guide](maintenance.md) defines the current cold-build, debug/release, cross-platform and mutation gates. These replace the earlier warm-cache assumption while retaining the original target. Active gaps are at most 16 reference lines, and optional hints are revealed in three stages. The release gate and CI use the same portable driver.
 
-
 ## Revision 3: diagnostic and debugging view
 
 The diagnostic path addresses learner concerns C2/C3 and evidence concern C10. The real Rust compiler owns type/ownership/API diagnostics and suggestions. Course fixtures supply behavioral contracts with failure details. Starter omissions use ordinary incomplete code; no inserted diverging TODO macro makes the surrounding valid code unreachable. Missing algorithms still require design: compiler suggestions do not establish semantic correctness.

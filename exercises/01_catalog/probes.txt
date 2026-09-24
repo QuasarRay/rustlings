@@ -1,5 +1,5 @@
 RUSTLINGS_WORKSHOP_V1
-src/app_state.rs	5814
+src/app_state.rs	6709
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -111,6 +111,22 @@ mod workshop_release_contracts {
     }
 }
 
+#[cfg(test)]
+mod workshop_output_contracts {
+    use super::*;
+    #[test]
+    fn final_recheck_prepares_the_terminal_before_reporting_a_regression() {
+        if let Some(output) = crate::workshop_output_support::capture("app_state::workshop_output_contracts::final_recheck_prepares_the_terminal_before_reporting_a_regression") {
+            assert_eq!(output.matches("\x1b[2J").count(), 2, "final recheck must clear the watch screen before the progress display clears it again: {output}");
+            return;
+        }
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_compile")], String::new(), None, false).unwrap();
+        let mut stdout = std::io::stdout().lock();
+        assert!(matches!(app.done_current_exercise::<true>(&mut stdout).unwrap(), ExercisesProgress::NewPending));
+    }
+}
+
 src/cmd.rs	1515
 
 #[cfg(test)]
@@ -169,7 +185,7 @@ mod workshop_author_dispatch_contracts {
 }
 
 
-src/dev/check.rs	3529
+src/dev/check.rs	4045
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -201,6 +217,14 @@ mod workshop_author_gate_contracts {
         }
         let runner = Box::leak(Box::new(CmdRunner::build().unwrap()));
         (cwd, info, runner)
+    }
+    #[test]
+    fn composed_author_gate_checks_the_exercise_catalog() {
+        let (_cwd, _, _) = fixture();
+        let invalid = fs::read_to_string("info.toml").unwrap().replace("format_version=1", "format_version=0");
+        fs::write("info.toml", invalid).unwrap();
+        let error = check(true).expect_err("the author gate accepted an unsupported exercise catalog").to_string();
+        assert!(error.contains("format_version"), "report the catalog version error, not an unrelated failure: {error}");
     }
     #[test]
     fn manifests_catalogs_and_inventory_enforce_the_author_contract() {
@@ -548,7 +572,7 @@ fn resize_and_viewport_preserve_a_valid_visible_selection() {
 
 }
 
-src/list/state.rs	2793
+src/list/state.rs	3131
 
 
 #[cfg(test)]
@@ -564,6 +588,10 @@ mod workshop_list_contracts {
     use super::*;
     #[test]
     fn filtering_search_and_selection_map_to_original_indices() {
+        if let Some(output) = crate::workshop_output_support::capture("list::state::workshop_list_contracts::filtering_search_and_selection_map_to_original_indices") {
+            assert!(output.contains("Current  State    Name"), "the list needs its column header to explain the displayed rows: {output}");
+            return;
+        }
         let (_cwd,mut app)=crate::workshop_test_support::app();
         app.set_status(1,true).unwrap();
         let mut out=io::stdout().lock();
@@ -602,7 +630,7 @@ mod workshop_list_contracts {
 }
 
 
-src/main.rs	2305
+src/main.rs	3214
 
 #[cfg(test)]
 mod workshop_test_support {
@@ -638,6 +666,22 @@ mod workshop_test_support {
         let cwd=cwd(true);
         let (state,_)=crate::app_state::AppState::new(vec![info("alpha"),info("beta"),info("gamma")],String::new(),None,false).unwrap();
         (cwd,state)
+    }
+}
+
+#[cfg(test)]
+mod workshop_output_support {
+    // StdoutLock bypasses libtest capture. Observe real output in one isolated
+    // copy of the exact test, leaving production terminal code intact.
+    pub fn capture(test: &str) -> Option<String> {
+        if std::env::var("WORKSHOP_CAPTURE_TEST").ok().as_deref() == Some(test) { return None; }
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", test, "--nocapture", "--test-threads=1"])
+            .env("WORKSHOP_CAPTURE_TEST", test).output().unwrap();
+        let text = format!("{}{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+        assert!(output.status.success(), "output fixture failed: {text}");
+        assert!(text.contains("test result: ok. 1 passed"), "the output fixture did not execute exactly one test: {text}");
+        Some(text)
     }
 }
 
@@ -748,7 +792,7 @@ fn a_rust_source_change_reaches_the_correct_mission() {
 
 }
 
-src/watch/state.rs	3936
+src/watch/state.rs	4631
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -794,6 +838,12 @@ mod workshop_state_machine_contracts {
     use super::*;
     #[test]
     fn run_change_hint_resize_and_advance_follow_actual_check_results() {
+        if let Some(output) = crate::workshop_output_support::capture("watch::state::workshop_state_machine_contracts::run_change_hint_resize_and_advance_follow_actual_check_results") {
+            assert!(output.contains("Resetting will undo all your changes to the file ") && output.contains("Reset (y/n)?"), "reset must explain what will happen before reading confirmation: {output}");
+            assert!(output.contains(":run / "), "manual mode must show the run action: {output}");
+            assert!(output.contains("Exercise done ✓") && output.contains("When done experimenting"), "a successful check must show completion and how to advance: {output}");
+            return;
+        }
         let _cwd = crate::workshop_test_support::cwd(true);
         let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok"), crate::workshop_test_support::info("probe_compile")], String::new(), None, false).unwrap();
         let (tx, rx) = std::sync::mpsc::channel();
@@ -869,5 +919,22 @@ mod workshop_input_contracts {
 pub(super) fn workshop_final_key(key: u8) {
     crossterm::event::EVENTS.lock().unwrap().clear();
     crossterm::event::FINAL_KEY.store(key, std::sync::atomic::Ordering::Relaxed);
+}
+
+src/run.rs	800
+
+#[cfg(test)]
+mod workshop_output_contracts {
+    use super::*;
+    #[test]
+    fn a_successful_run_identifies_the_completed_exercise() {
+        if let Some(output) = crate::workshop_output_support::capture("run::workshop_output_contracts::a_successful_run_identifies_the_completed_exercise") {
+            assert!(output.contains("✓ Successfully ran exercises/probe_ok.rs"), "successful execution must identify the exercise that passed: {output}");
+            return;
+        }
+        let _cwd = crate::workshop_test_support::cwd(true);
+        let (mut app, _) = AppState::new(vec![crate::workshop_test_support::info("probe_ok"), crate::workshop_test_support::info("probe_compile")], String::new(), None, false).unwrap();
+        assert_eq!(run(&mut app).unwrap(), ExitCode::SUCCESS);
+    }
 }
 
