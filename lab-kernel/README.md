@@ -62,7 +62,8 @@ The external runner currently bounds the deadline and accepted output size but
 does not sandbox the trusted grader or kill its entire process tree. Use a
 service/cgroup boundary for a grader that spawns descendants. A proof of the
 decision functions is not a proof that an arbitrary grader tells the truth.
-# Proof-generation boundary
+
+## Proof-generation boundary
 
 The generator rejects unmodeled top-level items, duplicate/missing functions,
 attributes, calls and proof-bypass constructs before emitting a Verus file. Its
