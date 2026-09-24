@@ -1,0 +1,19 @@
+{
+  "date": "2026-09-24",
+  "kernel_sha256": "5d8e362e3022c095eb13566698e372b1467a7f7c5c6d5361ba0ae4859294953e",
+  "verus": {
+    "version": "0.2026.09.20.aef82ed",
+    "verified": 6,
+    "errors": 0
+  },
+  "kani": {
+    "version": "0.67.0",
+    "verified_harnesses": 6,
+    "failures": 0
+  },
+  "rustlings_tests": {
+    "unit": 8,
+    "integration": 8
+  },
+  "scope": "Six pure kernel functions. Not the whole application, observers, OS, or lab bank."
+}

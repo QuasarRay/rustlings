@@ -24,6 +24,7 @@ mod dev;
 mod editor;
 mod embedded;
 mod exercise;
+mod external_assessment;
 mod info_file;
 mod init;
 mod list;

@@ -1,0 +1,38 @@
+name: ncp-kernel-proofs
+on:
+  pull_request:
+    paths: ['lab-kernel/**', 'src/external_assessment.rs', 'src/exercise.rs', 'Cargo.toml', 'Cargo.lock', '.github/workflows/ncp-kernel.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install 1.98.1 --profile minimal
+      - run: cargo +1.98.1 test --locked -p ncp-assessment-kernel
+      - run: cargo +1.98.1 test --locked --bin rustlings external_assessment
+      - name: Verify executable kernel with Kani
+        run: |
+          cargo +1.98.1 install kani-verifier --locked --version 0.67.0
+          cargo kani setup
+          mkdir -p proof-results
+          set -o pipefail
+          cargo kani -p ncp-assessment-kernel | tee proof-results/kani.log
+      - name: Verify executable kernel with Verus
+        run: |
+          curl --fail --location https://github.com/verus-lang/verus/releases/download/release/0.2026.09.20.aef82ed/verus-0.2026.09.20.aef82ed-x86-linux.zip -o /tmp/verus.zip
+          echo '7b870fa12bc589015c2fab60a8b3d9f07c7b1adb3444eb0fadffcbf7f0447b33  /tmp/verus.zip' | sha256sum -c -
+          unzip -q /tmp/verus.zip -d /tmp/verus
+          python3 lab-kernel/proofs/generate_verus.py proof-results/kernel.rs
+          set -o pipefail
+          /tmp/verus/verus-x86-linux/verus proof-results/kernel.rs | tee proof-results/verus.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: ncp-kernel-${{ github.sha }}
+          path: proof-results/
