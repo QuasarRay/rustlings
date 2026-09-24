@@ -25,7 +25,7 @@ macro_rules! repair {
             // solutions/ + / + .rs
             let mut path = String::with_capacity(14 + dir.len() + name.len());
             path.push_str("solutions/");
-            todo!("solution_paths");
+            path.push(dir); // TODO: Append the directory text.
             path.push('/');
             path
         } else {

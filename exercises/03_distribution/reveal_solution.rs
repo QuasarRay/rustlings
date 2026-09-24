@@ -31,8 +31,7 @@ macro_rules! repair {
         // solutions/ + / + .rs
 
         // TODO: Restore this step using the contract above.
-        todo!("reveal_solution");
-
+        // TODO: Complete the missing operation.
         let mut solution_path = dir_path;
         solution_path.push('/');
         solution_path.push_str(exercise_name);

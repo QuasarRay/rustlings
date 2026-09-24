@@ -17,8 +17,8 @@
 macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
-const fn default_false() -> bool {
-    true
+const fn default_true() -> bool {
+    false
 }
 // END RUSTLINGS REPAIR
     };

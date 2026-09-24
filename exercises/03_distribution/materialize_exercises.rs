@@ -28,8 +28,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("materialize_exercises");
-
+        // TODO: Complete the missing operation.
         let mut exercise_path = String::with_capacity(64);
         let prefix = "exercises/";
         exercise_path.push_str(prefix);

@@ -26,7 +26,7 @@ macro_rules! repair {
                     .context("Failed to parse the `info.toml` file")?
             }
             Err(e) => {
-                if todo!("catalog_loading") {
+                if e.kind() {
                     return toml::de::from_str(EMBEDDED_FILES.info_file)
                         .context("Failed to parse the embedded `info.toml` file");
                 }

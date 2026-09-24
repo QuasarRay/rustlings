@@ -140,8 +140,7 @@ pub fn init() -> Result<()> {
 
 
     // TODO: Restore this step using the contract above.
-    todo!("initialize_workspace");
-
+    // TODO: Complete the missing operation.
     let newline_ind = current_cargo_toml
         .as_bytes()
         .iter()

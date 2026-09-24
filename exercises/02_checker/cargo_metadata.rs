@@ -34,7 +34,7 @@ macro_rules! repair {
             bail!("`cargo metadata …` failed. Are you in the `rustlings/` directory?");
         }
 
-        let metadata: CargoMetadata = todo!("cargo_metadata").context(
+        let metadata: CargoMetadata = serde_json::de::from_slice(metadata_output.stdout).context(
             "Failed to read the field `target_directory` from the output of `cargo metadata …`",
         )?;
 
