@@ -41,6 +41,10 @@ pub fn render(report: &str, depth: TraceDepth) -> String {
     for line in report.split_inclusive('\n') {
         let trimmed = line.trim();
         if trimmed == "stack backtrace:" || trimmed == "Stack backtrace:" {
+            if omitted > 0 {
+                output.push_str(&format!("    ... {omitted} frames omitted; increase the course trace depth or use full.\n"));
+                omitted = 0;
+            }
             in_trace = true;
             frames = 0;
             skipping = false;
@@ -73,6 +77,23 @@ pub fn render(report: &str, depth: TraceDepth) -> String {
         ));
     }
     output
+}
+
+/// Put the failed stage first. A behavioral failure uses libtest's own failure
+/// section; successful-test chatter and earlier stages remain in the raw log.
+pub fn failure_report(report: &str) -> String {
+    let stage = report
+        .rsplit_once("\ncargo ")
+        .map_or_else(|| report.to_owned(), |(_, tail)| format!("cargo {tail}"));
+    if stage.starts_with("cargo test ")
+        && let Some((_, failures)) = stage.split_once("\nfailures:\n")
+    {
+        return format!(
+            "{}\n\nfailures:\n{failures}",
+            stage.lines().next().unwrap_or_default()
+        );
+    }
+    stage
 }
 
 pub struct Origin {
@@ -148,6 +169,18 @@ mod tests {
     fn compiler_suggestions_and_unrecognized_trace_formats_are_unchanged() {
         let report = "error[E0308]: mismatched types\nhelp: consider borrowing here\n\nstack backtrace:\n    platform-specific frame\n\nerror: could not compile\n";
         assert_eq!(render(report, TraceDepth::Frames(0)), report);
+    }
+    #[test]
+    fn failed_stage_keeps_rust_help_and_libtest_assertions_without_success_chatter() {
+        let compiler = "cargo check --locked --workspace\nerror[E0308]: mismatched types\nhelp: consider borrowing here\n";
+        assert_eq!(failure_report(compiler), compiler);
+        let report = "cargo check --locked\nFinished\ncargo test --locked --workspace\ntest unrelated ... ok\nfailures:\n\n---- actual_contract stdout ----\nassertion failed: counter\n  left: 0\n right: 1\n\nfailures:\n    actual_contract\ntest result: FAILED\n";
+        let displayed = failure_report(report);
+        assert!(!displayed.contains("unrelated"));
+        assert!(!displayed.contains("cargo check"));
+        assert!(displayed.contains("---- actual_contract stdout ----"));
+        assert!(displayed.contains("left: 0\n right: 1"));
+        assert!(displayed.contains("test result: FAILED"));
     }
     #[test]
     fn maps_only_repair_lines_including_windows_and_panic_locations() {

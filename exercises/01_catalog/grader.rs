@@ -685,11 +685,16 @@ impl Workshop {
             );
             let path = self.cache.join(format!("diagnostics/{id:03}-{role}.log"));
             write_changed(&path, format!("{header}{report}").as_bytes())?;
+            let displayed = if code == 1 {
+                diagnostics::failure_report(&report)
+            } else {
+                report
+            };
             return outcome(
                 code,
                 format!(
                     "{header}{}\nFull tool report: {}\nInspect more frames: rustlings workshop trace {} 1 (then 2, 3, or full).\n",
-                    diagnostics::render(&report, diagnostics::TraceDepth::environment()),
+                    diagnostics::render(&displayed, diagnostics::TraceDepth::environment()),
                     path.display(),
                     m.name
                 ),
