@@ -48,6 +48,8 @@ jobs:
           name: course-evidence-${{ matrix.os }}-${{ matrix.rust }}
           path: |
             target/workshop/audit.txt
+            target/workshop/starter-audit.tsv
+            target/workshop/starter-*.log
             target/workshop/mutation-audit.tsv
             target/workshop/mutation-*.log
           if-no-files-found: ignore

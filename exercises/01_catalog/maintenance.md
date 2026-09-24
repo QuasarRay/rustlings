@@ -14,6 +14,7 @@ Reports under `target/workshop` distinguish three claims:
 
 | Report | Evidence and limits |
 | --- | --- |
+| `starter-audit.tsv` and `starter-NNN.log` | Per-mission compiler or behavioral rejection and unedited tool output. Escaping starters and starters rejected only by lint denial fail the audit. |
 | `audit.txt` | All 112 isolated starters fail, all reference repairs pass, and all 266 archived files reconstruct exactly. A TODO lint failure alone establishes no behavioral coverage. |
 | `mutation-audit.tsv` | Mission, source file, fault kind, outcome, and executed test names. Every mission has a compiling runtime-fault check (or a changed constant); 19 also have wrong-value, boundary, predicate, or side-effect mutations. The procedural macro is observed at compile time. |
 | `mutation-NNN-KIND.log` | Commands and raw diagnostics for that individual mutation. `CAUGHT` requires a running behavioral test to fail after compilation, or the expected procedural-macro panic. Clippy runs after behavioral checks; a lint failure alone is not mutation evidence. Runtime-fault evidence must contain that mission's marker. |

@@ -415,7 +415,7 @@ mod workshop_materialization_contracts {
     }
 }
 
-src/exercise.rs	1299
+src/exercise.rs	2270
 
 #[cfg(test)]
 mod workshop_contracts {
@@ -445,6 +445,25 @@ mod workshop_path_contracts {
         assert_eq!(info.sol_path(), "solutions/quest.rs");
         info.dir = Some("chapter");
         assert_eq!(info.sol_path(), "solutions/chapter/quest.rs");
+    }
+}
+
+#[cfg(test)]
+mod workshop_diagnostic_contracts {
+    use super::*;
+    #[test]
+    fn a_failed_test_keeps_its_cause_without_repeating_build_warnings() {
+        let _cwd = crate::workshop_test_support::cwd(true);
+        std::fs::write("exercises/probe_tests.rs",
+            "fn main() { let diagnostic_probe = 1; } #[test] fn broken() { panic!(\"specific learner failure\"); }").unwrap();
+        let runner = CmdRunner::build().unwrap();
+        let info = crate::workshop_test_support::info("probe_tests");
+        let mut output = Vec::new();
+        assert!(!info.run_exercise(Some(&mut output), &runner).unwrap());
+        let text = String::from_utf8_lossy(&output);
+        assert!(text.contains("specific learner failure"), "the failed test's cause was lost: {text}");
+        assert_eq!(text.matches("unused variable:").count(), 1,
+            "the build and test stages repeated the same compiler warning; each diagnostic must appear once: {text}");
     }
 }
 

@@ -632,25 +632,47 @@ impl Workshop {
         if !pass {
             return fail(format!("Reference checker failed:\n{report}"));
         }
+        let mut unhelpful = Vec::new();
+        let mut evidence = String::from("id\tmission\trejection_stage\n");
         for m in &self.missions {
             let mut repairs = baseline.clone();
             repairs[m.id - 1] = self.read_fragment(m, "exercises")?;
             if repairs[m.id - 1] == baseline[m.id - 1] {
                 return fail(format!("{} is already solved", m.name));
             }
-            let (pass, _) = self.evaluate(&self.assembled(&repairs)?, true)?;
-            if pass {
-                return fail(format!(
-                    "Injected defect in {} escaped compilation and behavioral checks",
-                    m.name
-                ));
+            let (pass, report) = self.evaluate(&self.assembled(&repairs)?, true)?;
+            let stage = if pass {
+                "ESCAPED"
+            } else if report
+                .lines()
+                .rev()
+                .find(|l| l.starts_with("cargo "))
+                .is_some_and(|l| l.starts_with("cargo clippy "))
+            {
+                "LINT_ONLY"
+            } else if report.contains("test result: FAILED") {
+                "CONTRACT"
+            } else {
+                "COMPILER"
+            };
+            evidence.push_str(&format!("{}\t{}\t{stage}\n", m.id, m.name));
+            fs::write(self.cache.join("starter-audit.tsv"), &evidence)?;
+            fs::write(self.cache.join(format!("starter-{:03}.log", m.id)), &report)?;
+            if pass || stage == "LINT_ONLY" {
+                unhelpful.push(format!("{}: {stage}", m.name));
             }
             println!(
-                "{:03}/{} verified: starter FAIL, reference PASS — {}",
+                "{:03}/{} starter {stage}, reference PASS — {}",
                 m.id,
                 self.missions.len(),
                 m.name
             );
+        }
+        if !unhelpful.is_empty() {
+            return fail(format!(
+                "Starters must fail compilation or a behavioral contract, without relying on lint denial:\n{}",
+                unhelpful.join("\n")
+            ));
         }
         let summary = format!(
             "{} independently failing starters; {} passing reference repairs; byte-identical reference reconstruction; original and added regression tests passed.\n",
