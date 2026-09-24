@@ -66,8 +66,9 @@ fn run_watch(
     // Prevent dropping the guard until the end of the function.
     // Otherwise, the file watcher exits.
     let _watcher_guard = if let Some(exercise_names) = notify_exercise_names {
+        let watch_python = std::env::var_os("NCP_GRADER_CONFIG").is_some();
         let notify_event_handler =
-            NotifyEventHandler::build(watch_event_sender.clone(), exercise_names)?;
+            NotifyEventHandler::build(watch_event_sender.clone(), exercise_names, watch_python)?;
 
         let mut watcher = RecommendedWatcher::new(
             notify_event_handler,
@@ -80,6 +81,12 @@ fn run_watch(
         watcher
             .watch(Path::new("exercises"), RecursiveMode::Recursive)
             .inspect_err(|_| eprintln!("{NOTIFY_ERR}"))?;
+
+        if watch_python && Path::new("controllers").is_dir() {
+            watcher
+                .watch(Path::new("controllers"), RecursiveMode::Recursive)
+                .inspect_err(|_| eprintln!("{NOTIFY_ERR}"))?;
+        }
 
         Some(watcher)
     } else {
