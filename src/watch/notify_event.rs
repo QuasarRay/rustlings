@@ -22,12 +22,14 @@ pub struct NotifyEventHandler {
     update_sender: SyncSender<usize>,
     // Used to report which exercise was modified.
     exercise_names: &'static [&'static [u8]],
+    watch_python: bool,
 }
 
 impl NotifyEventHandler {
     pub fn build(
         watch_event_sender: Sender<WatchEvent>,
         exercise_names: &'static [&'static [u8]],
+        watch_python: bool,
     ) -> Result<Self> {
         let (update_sender, update_receiver) = sync_channel(0);
         let error_sender = watch_event_sender.clone();
@@ -64,6 +66,7 @@ impl NotifyEventHandler {
             error_sender,
             update_sender,
             exercise_names,
+            watch_python,
         })
     }
 }
@@ -119,14 +122,33 @@ impl notify::EventHandler for NotifyEventHandler {
             .filter_map(|path| {
                 let file_name = path.file_name()?.to_str()?.as_bytes();
 
-                let [file_name_without_ext @ .., b'.', b'r', b's'] = file_name else {
-                    return None;
-                };
+                let file_name_without_ext = controller_stem(file_name, self.watch_python)?;
 
                 self.exercise_names
                     .iter()
                     .position(|exercise_name| *exercise_name == file_name_without_ext)
             })
             .try_for_each(|exercise_ind| self.update_sender.send(exercise_ind));
+    }
+}
+
+fn controller_stem(name: &[u8], watch_python: bool) -> Option<&[u8]> {
+    match name {
+        [stem @ .., b'.', b'r', b's'] => Some(stem),
+        [stem @ .., b'.', b'p', b'y'] if watch_python => Some(stem),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn external_python_controllers_are_opt_in_and_match_exact_names() {
+        assert_eq!(controller_stem(b"e01a.rs", false), Some(&b"e01a"[..]));
+        assert_eq!(controller_stem(b"e01a.py", true), Some(&b"e01a"[..]));
+        assert_eq!(controller_stem(b"e01a.py", false), None);
+        assert_eq!(controller_stem(b"e01a.py.bak", true), None);
+        assert_eq!(controller_stem(b"e01a.pyc", true), None);
     }
 }
