@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 fn run_cmd(cmd: &mut Command) -> Result<Vec<u8>> {
     // TODO: Implement this operation using the contract above.
-    todo!("editor_process")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

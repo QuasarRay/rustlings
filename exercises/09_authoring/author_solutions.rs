@@ -65,8 +65,7 @@ fn check_solutions(
 
 
     // TODO: Restore this step using the contract above.
-    todo!("author_solutions");
-
+    // TODO: Complete the missing operation.
     for (exercise_info, handle) in info_file.exercises.iter().zip(handles) {
         let Ok(check_result) = handle.join() else {
             bail!(

@@ -19,8 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 fn check_unexpected_files(dir: &str, allowed_files: &HashSet<PathBuf>) -> Result<()> {
     // TODO: Restore this step using the contract above.
-    todo!("author_file_inventory");
-
+    // TODO: Complete the missing operation.
     for entry in read_dir(dir).with_context(|| format!("Failed to open the `{dir}` directory"))? {
         let entry = entry.with_context(|| format!("Failed to read the `{dir}` directory"))?;
 

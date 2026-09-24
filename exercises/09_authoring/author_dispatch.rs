@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn run(self) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("author_dispatch")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

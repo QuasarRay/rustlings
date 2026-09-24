@@ -34,8 +34,7 @@ pub fn include_files(_: TokenStream) -> TokenStream {
 
 
     // TODO: Restore this step using the contract above.
-    todo!("embedded_macro");
-
+    // TODO: Complete the missing operation.
     let input_files = exercises.iter().map(|exercise| {
         let names = exercise.input_files.iter();
         let paths = exercise

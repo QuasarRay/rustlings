@@ -26,7 +26,7 @@ macro_rules! repair {
             .spawn(move || {
                 match &mut self {
                     Editor::Cmd(program, args) => {
-                        todo!("editor_launch");
+                        // TODO: Complete the missing operation.
                     }
                     Editor::Zellij(open_pane) => {
                         if let Some((pane_id_str, pane_id, open_exercise_ind)) = open_pane {

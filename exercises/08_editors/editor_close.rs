@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn close(&mut self) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("editor_close")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

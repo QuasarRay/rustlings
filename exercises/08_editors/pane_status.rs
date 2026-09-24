@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 pub fn pane_open(pane_id: u32) -> Result<bool> {
     // TODO: Implement this operation using the contract above.
-    todo!("pane_status")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

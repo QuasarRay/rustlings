@@ -41,8 +41,7 @@ fn main() -> Result<ExitCode> {
 
 
     // TODO: Restore this step using the contract above.
-    todo!("launch_dispatch");
-
+    // TODO: Complete the missing operation.
     if info_file.format_version > CURRENT_FORMAT_VERSION {
         bail!(FORMAT_VERSION_HIGHER_ERR);
     }
