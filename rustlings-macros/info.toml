@@ -18,7 +18,7 @@ name = "catalog_paths"
 dir = "01_catalog"
 test = true
 strict_clippy = true
-input_files = ["runner.rs", "grader.rs", "host.rs", "process.rs", "course.rs", "exercises.lock", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh", "hints.tsv", "export.md", "troubleshooting.md", "architecture.md", "maintenance.md", "source-map.md", "audit-review.md"]
+input_files = ["runner.rs", "grader.rs", "host.rs", "process.rs", "diagnostics.rs", "course.rs", "exercises.lock", "upstream.txt", "missions.tsv", "missions.json", "probes.txt", "audit.sh", "hints.tsv", "export.md", "troubleshooting.md", "architecture.md", "maintenance.md", "source-map.md", "audit-review.md"]
 hint = "Build an exercise path for both a root-level file and a directory. Preserve the exercises/ prefix and .rs suffix. Focus on path in src/info_file.rs.\nFor a narrower diagnostic: rustlings workshop hint catalog_paths 2\nFor the strongest hint: rustlings workshop hint catalog_paths 3\nIn this checkout use cargo run --locked -- workshop hint catalog_paths 2"
 
 [[exercises]]

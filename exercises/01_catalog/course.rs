@@ -140,6 +140,11 @@ fn main() -> Result<()> {
     }
     let binary = grader()?;
     match mode.as_str() {
+        "trace" => {
+            run(Command::new(&binary)
+                .args([".", "trace"])
+                .args(std::env::args().skip(2)))?;
+        }
         "prepare" => {
             run(Command::new(&binary).args([".", "prepare"]))?;
             println!(
@@ -213,7 +218,7 @@ fn main() -> Result<()> {
         }
         _ => {
             return Err(
-                "usage: course doctor|info|hint MISSION [LEVEL]|prepare|audit|mutations [FIRST LAST]|smoke|release".into(),
+                "usage: course doctor|info|hint MISSION [LEVEL]|trace MISSION [DEPTH]|prepare|audit|mutations [FIRST LAST]|smoke|release".into(),
             );
         }
     }

@@ -14,6 +14,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod diagnostics;
 mod process;
 
 #[derive(Debug)]
@@ -181,6 +182,11 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
     );
     for (key, value) in std::env::vars_os() {
         let name = key.to_string_lossy();
+        // Trace presentation never changes the checked source or prerequisites.
+        // Child checks always record full traces; the display depth is separate.
+        if ["RUST_BACKTRACE", "RUST_LIB_BACKTRACE"].contains(&name.as_ref()) {
+            continue;
+        }
         if name.starts_with("RUST")
             || name.starts_with("CARGO_")
             || [
@@ -295,6 +301,7 @@ impl Workshop {
         identity.extend_from_slice(map.as_bytes());
         identity.extend_from_slice(&fs::read(support.join("grader.rs"))?);
         identity.extend_from_slice(&fs::read(support.join("process.rs"))?);
+        identity.extend_from_slice(&fs::read(support.join("diagnostics.rs"))?);
         identity.extend_from_slice(&environment_identity(&root)?);
         for tool in ["rustc", "cargo"] {
             let out = Command::new(tool)
@@ -516,6 +523,8 @@ impl Workshop {
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
                 .env(BUILD_ID_ENV, &build_id)
+                .env("RUST_BACKTRACE", "full")
+                .env("RUST_LIB_BACKTRACE", "full")
                 .env("CARGO_TERM_COLOR", "never");
             if std::env::var_os("CARGO_BUILD_JOBS").is_none() {
                 cmd.env("CARGO_BUILD_JOBS", "2");
@@ -580,7 +589,55 @@ impl Workshop {
         }
         Ok((passed, report))
     }
-    fn check(&self, id: usize, role: &str, source: &str) -> Result<()> {
+    fn origins(
+        &self,
+        repairs: &[String],
+        role: &str,
+        source: &str,
+        source_path: Option<&Path>,
+    ) -> Result<Vec<diagnostics::Origin>> {
+        let mut origins = Vec::new();
+        for (m, body) in self.missions.iter().zip(repairs) {
+            let mut first = 1 + self.base[&m.file][..m.start]
+                .bytes()
+                .filter(|b| *b == b'\n')
+                .count();
+            // Earlier missions can occur later in the original file. Apply only
+            // replacements physically before this one when translating lines.
+            for (other, replacement) in self.missions.iter().zip(repairs) {
+                if other.file == m.file && other.start < m.start {
+                    first += replacement.bytes().filter(|b| *b == b'\n').count();
+                    first -= self.base[&m.file][other.start..other.end]
+                        .bytes()
+                        .filter(|b| *b == b'\n')
+                        .count();
+                }
+            }
+            let editable = format!("{role}/{}/{}.rs", m.dir, m.name);
+            let current = m.id == repairs.len();
+            let text = if current {
+                source.to_owned()
+            } else {
+                fs::read_to_string(self.root.join(&editable))?
+            };
+            let header = text.split_once(BEGIN).ok_or("missing repair marker")?.0;
+            origins.push(diagnostics::Origin {
+                generated: m.file.clone(),
+                first,
+                last: first + body.bytes().filter(|b| *b == b'\n').count(),
+                editable: if current {
+                    source_path
+                        .map(|p| p.display().to_string())
+                        .unwrap_or(editable)
+                } else {
+                    editable
+                },
+                editable_first: header.bytes().filter(|b| *b == b'\n').count() + 2,
+            });
+        }
+        Ok(origins)
+    }
+    fn check(&self, id: usize, role: &str, source: &str, source_path: Option<&Path>) -> Result<()> {
         if !["exercises", "solutions"].contains(&role) {
             return fail("invalid source role");
         }
@@ -591,13 +648,50 @@ impl Workshop {
         let mut repairs = self.prior_repairs(id - 1, role)?;
         repairs.push(fragment(source)?);
         let files = self.assembled(&repairs)?;
-        let (pass, report) = self.evaluate(&files, false)?;
-        if !pass {
+        let result = self.evaluate(&files, false);
+        let (code, report) = match result {
+            Ok((true, _)) => (0, String::new()),
+            Ok((false, report)) => (1, report),
+            Err(error) => (
+                error.downcast_ref::<GradingError>().map_or(2, |e| e.code),
+                error.to_string(),
+            ),
+        };
+        if code != 0 {
+            let origins = self.origins(&repairs, role, source, source_path)?;
+            let active = origins.last().ok_or("missing current repair")?;
+            let contract = fs::read_to_string(self.root.join("exercises/01_catalog/hints.tsv"))?
+                .lines()
+                .find_map(|line| {
+                    let mut fields = line.split('\t');
+                    (fields.next() == Some(m.name.as_str()))
+                        .then(|| fields.next().unwrap_or_default().to_owned())
+                })
+                .unwrap_or_default();
+            let label = if code == 1 {
+                "REJECTED"
+            } else {
+                "INFRASTRUCTURE"
+            };
+            let header = format!(
+                "{label}: mission {id:03} {}.\nContract: {contract}\nRepair: {}:{} (restores {}:{}..{}).\n{}",
+                m.name,
+                active.editable,
+                active.editable_first,
+                active.generated,
+                active.first,
+                active.last,
+                diagnostics::locations(&report, &origins)
+            );
+            let path = self.cache.join(format!("diagnostics/{id:03}-{role}.log"));
+            write_changed(&path, format!("{header}{report}").as_bytes())?;
             return outcome(
-                1,
+                code,
                 format!(
-                    "REJECTED: mission {:03} {}.\nEdit exercises/{}/{}.rs (restores {}), not target/workshop/engine.\n{}",
-                    id, m.name, m.dir, m.name, m.file, report
+                    "{header}{}\nFull tool report: {}\nInspect more frames: rustlings workshop trace {} 1 (then 2, 3, or full).\n",
+                    diagnostics::render(&report, diagnostics::TraceDepth::environment()),
+                    path.display(),
+                    m.name
                 ),
             );
         }
@@ -615,6 +709,26 @@ impl Workshop {
                 "Final gate passed. Export your reconstructed Rustlings using exercises/README.md."
             );
         }
+        Ok(())
+    }
+    fn trace(&self, name: &str, depth: &str) -> Result<()> {
+        let m = self
+            .missions
+            .iter()
+            .find(|m| m.name == name)
+            .ok_or("unknown mission name")?;
+        let path = self
+            .cache
+            .join(format!("diagnostics/{:03}-exercises.log", m.id));
+        let report = fs::read_to_string(&path).map_err(|_| {
+            format!("No saved learner diagnostic for {name}. Run that mission in Rustlings first.")
+        })?;
+        let depth = diagnostics::TraceDepth::parse(depth)?;
+        println!(
+            "Saved tool report for {name}; rerun the mission after source changes.\n{}\nFull report: {}",
+            diagnostics::render(&report, depth),
+            path.display()
+        );
         Ok(())
     }
     fn audit(&self) -> Result<()> {
@@ -896,14 +1010,19 @@ fn run() -> Result<()> {
             let role = args.get(4).ok_or("missing role")?;
             let mut source = String::new();
             std::io::stdin().read_to_string(&mut source)?;
-            workshop.check(id, role, &source)
+            workshop.check(id, role, &source, None)
         }
         "check-file" => {
             let id = args.get(3).ok_or("missing mission")?.parse()?;
             let role = args.get(4).ok_or("missing role")?;
             let source = fs::read_to_string(args.get(5).ok_or("missing source path")?)?;
-            workshop.check(id, role, &source)
+            workshop.check(id, role, &source, Some(Path::new(&args[5])))
         }
+        "trace" => workshop.trace(
+            args.get(3)
+                .ok_or("usage: grader ROOT trace MISSION [DEPTH]")?,
+            args.get(4).map(String::as_str).unwrap_or("1"),
+        ),
         "export" => workshop.export(
             Path::new(args.get(3).ok_or("missing destination")?),
             args.get(4).map(String::as_str).unwrap_or("exercises"),
@@ -1014,6 +1133,45 @@ mod verifier_tests {
         let after = environment_identity(&tmp.0).unwrap();
         assert_ne!(before, after);
         assert_eq!(after, environment_identity(&tmp.0).unwrap());
+    }
+    #[test]
+    fn trace_depth_preserves_receipts_but_rustflags_change_identity() {
+        const CHILD: &str = "WORKSHOP_ENVIRONMENT_TEST_ROOT";
+        if let Some(root) = std::env::var_os(CHILD) {
+            println!(
+                "ENVIRONMENT_ID={}",
+                digest(&environment_identity(Path::new(&root)).unwrap())
+            );
+            return;
+        }
+        let tmp = Scratch::new();
+        let mut identities = Vec::new();
+        for (depth, flags) in [
+            ("0", ""),
+            ("1", ""),
+            ("3", ""),
+            ("full", ""),
+            ("3", "--cfg changed_build"),
+        ] {
+            let (status, output) = process::capture(
+                Command::new(std::env::current_exe().unwrap())
+                    .args(["--exact", "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity", "--nocapture"])
+                    .env(CHILD, &tmp.0).env("RUST_BACKTRACE", depth)
+                    .env("RUST_LIB_BACKTRACE", depth).env("RUSTFLAGS", flags),
+                Duration::from_secs(10),
+            ).unwrap();
+            assert!(status.success(), "{}", String::from_utf8_lossy(&output));
+            identities.push(
+                String::from_utf8(output)
+                    .unwrap()
+                    .lines()
+                    .find_map(|l| l.strip_prefix("ENVIRONMENT_ID="))
+                    .unwrap()
+                    .to_owned(),
+            );
+        }
+        assert!(identities[..4].iter().all(|id| id == &identities[0]));
+        assert_ne!(identities[0], identities[4]);
     }
     #[test]
     fn a_persisted_tool_failure_does_not_block_retrying_unchanged_source() {

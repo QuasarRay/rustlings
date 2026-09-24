@@ -16,7 +16,7 @@ pub fn run(mission: usize, source: &str) {
         .expect("run from the initialized course or its repository");
     let support = root.join("exercises/01_catalog");
     let mut hash = DefaultHasher::new();
-    for input in ["grader.rs", "process.rs"] {
+    for input in ["grader.rs", "process.rs", "diagnostics.rs"] {
         fs::read(support.join(input))
             .expect("read course verifier")
             .hash(&mut hash);
