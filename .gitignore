@@ -18,3 +18,6 @@ Cargo.lock
 
 # Ignore file for editors like Helix
 .ignore
+
+__pycache__/
+*.pyc

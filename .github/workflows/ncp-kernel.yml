@@ -16,6 +16,8 @@ jobs:
       - run: rustup toolchain install 1.98.1 --profile minimal
       - run: cargo +1.98.1 test --locked -p ncp-assessment-kernel
       - run: cargo +1.98.1 test --locked --bin rustlings external_assessment
+      - run: python3 -m unittest discover -s lab-kernel/proofs -p 'test_*.py'
+      - run: python3 -O -m unittest discover -s lab-kernel/proofs -p 'test_*.py'
       - name: Verify executable kernel with Kani
         run: |
           cargo +1.98.1 install kani-verifier --locked --version 0.67.0
@@ -30,7 +32,7 @@ jobs:
           unzip -q /tmp/verus.zip -d /tmp/verus
           python3 lab-kernel/proofs/generate_verus.py proof-results/kernel.rs
           set -o pipefail
-          /tmp/verus/verus-x86-linux/verus proof-results/kernel.rs | tee proof-results/verus.log
+          /tmp/verus/verus-x86-linux/verus --no-cheating proof-results/kernel.rs | tee proof-results/verus.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
