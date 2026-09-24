@@ -26,8 +26,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("persist_progress");
-
+        // TODO: Complete the missing operation.
         self.state_file
             .rewind()
             .with_context(|| format!("Failed to rewind the state file {STATE_FILE_NAME}"))?;

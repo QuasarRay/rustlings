@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn check_all_exercises(&mut self, stdout: &mut StdoutLock) -> Result<Option<usize>> {
         // TODO: Implement this operation using the contract above.
-        todo!("save_check_all")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

@@ -26,8 +26,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("reset_source");
-
+        // TODO: Complete the missing operation.
         if !output.status.success() {
             bail!(
                 "`git stash push -- {path}` didn't run successfully: {}",

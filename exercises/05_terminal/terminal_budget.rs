@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn new(stdout: &'a mut StdoutLock<'lock>, max_len: usize) -> Self {
         // TODO: Implement this operation using the contract above.
-        todo!("terminal_budget")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

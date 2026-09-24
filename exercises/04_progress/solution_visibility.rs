@@ -29,7 +29,7 @@ macro_rules! repair {
                 .write_solution_to_disk(self.current_exercise_ind, current_exercise.name)
                 .map(Some)
         } else {
-            let sol_path = todo!("solution_visibility");
+            let sol_path = current_exercise.sol_path;
 
             if Path::new(&sol_path).exists() {
                 return Ok(Some(sol_path));

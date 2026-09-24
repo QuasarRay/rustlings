@@ -22,8 +22,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("parallel_check_all");
-
+        // TODO: Complete the missing operation.
         thread::scope(|s| {
             let (progress_sender, progress_receiver) = mpsc::channel();
             let n_threads = thread::available_parallelism()

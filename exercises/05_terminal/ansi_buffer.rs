@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 pub fn write_ansi(output: &mut Vec<u8>, command: impl Command) {
     // TODO: Implement this operation using the contract above.
-    todo!("ansi_buffer")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

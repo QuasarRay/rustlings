@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn reset_current_exercise(&mut self) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("reset_current")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

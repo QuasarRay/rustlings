@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     fn write_ascii(&mut self, ascii: &[u8]) -> io::Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("ascii_width")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };
