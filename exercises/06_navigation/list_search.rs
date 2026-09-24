@@ -28,8 +28,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("list_search");
-
+        // TODO: Complete the missing operation.
         match ind {
             Some(exercise_ind) => self.scroll_state.set_selected(exercise_ind),
             None => self.message.push_str(" (not found)"),

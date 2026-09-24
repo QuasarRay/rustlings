@@ -31,8 +31,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("watch_run");
-
+        // TODO: Complete the missing operation.
         let success = self
             .app_state
             .current_exercise()

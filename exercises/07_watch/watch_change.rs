@@ -23,7 +23,7 @@ macro_rules! repair {
         stdout: &mut StdoutLock,
     ) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("watch_change")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

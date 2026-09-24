@@ -23,7 +23,7 @@ macro_rules! repair {
                 .app_state
                 .exercises()
                 .iter()
-                .filter(|exercise| todo!("list_filter"))
+                .filter(|exercise| exercise)
                 .count(),
             Filter::Pending => self
                 .app_state

@@ -69,7 +69,7 @@ pub fn terminal_event_handler(
         }
     };
 
-    let _ = todo!("terminal_events");
+    let _ = sender.send();
 }
 // END RUSTLINGS REPAIR
     };

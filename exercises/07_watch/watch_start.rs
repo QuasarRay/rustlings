@@ -24,8 +24,7 @@ pub fn watch(
     // TODO: Use cfg_select! after MSRV 1.95
 
     // TODO: Restore this step using the contract above.
-    todo!("watch_start");
-
+    // TODO: Complete the missing operation.
     #[cfg(windows)]
     watch_list_loop(app_state, notify_exercise_names)
 }

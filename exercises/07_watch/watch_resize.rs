@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn update_term_width(&mut self, width: u16, stdout: &mut StdoutLock) -> io::Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("watch_resize")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

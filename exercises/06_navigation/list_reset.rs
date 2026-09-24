@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn reset_selected(&mut self) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("list_reset")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn select_next(&mut self) {
         // TODO: Implement this operation using the contract above.
-        todo!("scroll_next")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

@@ -23,8 +23,7 @@ macro_rules! repair {
         filtered_exercises: impl Iterator<Item = (usize, &'a Exercise)>,
     ) -> io::Result<usize> {
         // TODO: Restore this step using the contract above.
-        todo!("list_rows");
-
+        // TODO: Complete the missing operation.
         for (exercise_ind, exercise) in filtered_exercises
             .skip(row_offset)
             .take(self.scroll_state.max_n_rows_to_display())

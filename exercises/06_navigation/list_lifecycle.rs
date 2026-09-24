@@ -26,7 +26,7 @@ pub fn list(app_state: &mut AppState) -> Result<()> {
         .queue(EnableMouseCapture)?;
     enable_raw_mode()?;
 
-    let res = todo!("list_lifecycle");
+    let res = handle_list(app_state, stdout);
 
     // Restore the terminal even if we got an error.
     stdout

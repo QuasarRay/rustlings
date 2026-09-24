@@ -54,8 +54,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("debounce_updates");
-
+        // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

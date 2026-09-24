@@ -50,8 +50,7 @@ fn run_watch(
 
 
     // TODO: Restore this step using the contract above.
-    todo!("watch_dispatch");
-
+    // TODO: Complete the missing operation.
     watch_state.run_current_exercise(&mut stdout)?;
 
     while let Ok(event) = watch_event_receiver.recv() {

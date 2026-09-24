@@ -40,8 +40,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("list_model");
-
+        // TODO: Complete the missing operation.
         let mut slf = Self {
             message: String::with_capacity(128),
             search_query: String::new(),
