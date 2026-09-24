@@ -62,3 +62,12 @@ The external runner currently bounds the deadline and accepted output size but
 does not sandbox the trusted grader or kill its entire process tree. Use a
 service/cgroup boundary for a grader that spawns descendants. A proof of the
 decision functions is not a proof that an arbitrary grader tells the truth.
+
+## Proof-generation boundary
+
+The generator rejects unmodeled top-level items, duplicate/missing functions,
+attributes, calls and proof-bypass constructs before emitting a Verus file. Its
+checks use exceptions and remain active under `python -O`. The supported syntax
+is deliberately the current pure scalar kernel; an extension requires a reviewed
+parser and contract change. Verus runs with `--no-cheating` in CI. The generator
+and specifications remain trusted; this does not prove the Python transformer.
