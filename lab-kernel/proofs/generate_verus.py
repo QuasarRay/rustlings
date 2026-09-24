@@ -17,10 +17,11 @@ contracts={
  'admitted':'result == (0 < requested && requested <= allocated && allocated <= physical)',
  'facets_complete':'result == (required != 0 && (required & observed) == required)',
  'advance':'result as int == (if passed && exercise == current && current < total { current as int + 1 } else { current as int }), (current <= total ==> current <= result && result <= total)',
+ 'reserve':'result as int == (if requested > 0 && used <= capacity && requested as int <= capacity as int - used as int { used as int + requested as int } else { used as int }), result >= used, (used <= capacity ==> result <= capacity), (result > used ==> result as int - used as int == requested as int)',
 }
 assert set(re.findall(r'pub fn (\w+)\(',source))==set(contracts), 'every exported function requires a contract'
 for name,contract in contracts.items():
-    pattern=rf'(pub fn {name}\([^{{]+?\)) -> (bool|u16) \{{'
+    pattern=rf'(pub fn {name}\([^{{]+?\)) -> (bool|u16|u64) \{{'
     source,n=re.subn(pattern,lambda m:m[1]+f' -> (result: {m[2]})\n    ensures {contract}\n{{',source,count=1)
     assert n==1, f'cannot insert contract for {name}'
 result='// Input SHA256: '+hashlib.sha256((root/'src/kernel.rs').read_bytes()).hexdigest()+'\nuse vstd::prelude::*;\nverus! {\n'+source+'\n}\nfn main() {}\n'

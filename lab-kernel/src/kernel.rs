@@ -31,3 +31,13 @@ pub fn advance(current: u16, exercise: u16, total: u16, passed: bool) -> u16 {
         current
     }
 }
+
+/// Reserve a positive quantity atomically, or retain the original usage.
+/// Callers accept only a strict increase; subtraction is guarded against underflow.
+pub fn reserve(used: u64, requested: u64, capacity: u64) -> u64 {
+    if requested > 0 && used <= capacity && requested <= capacity - used {
+        used + requested
+    } else {
+        used
+    }
+}

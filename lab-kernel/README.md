@@ -31,6 +31,9 @@ they require an exact match, not an assumed fidelity hierarchy.
 function contracts into those exact bodies, hashes its input and rejects an
 export without a contract. Kani checks the same crate. There are no admitted
 proofs, external-body annotations or disabled overflow/unwinding checks.
+`reserve` is also used by the native topology compiler: it accepts a positive
+resource request exactly when remaining capacity permits it, adds that exact
+quantity without overflow, and otherwise leaves usage unchanged.
 These functions contain no loops; their symbolic checks cover their full
 machine-integer input widths. The facet proof quantifies over all 64 bit positions.
 

@@ -10,6 +10,23 @@ pub use kernel::*;
 mod proofs {
     use super::*;
     #[kani::proof]
+    fn reservations_are_atomic_exact_and_never_overcommit() {
+        let used: u64 = kani::any();
+        let requested: u64 = kani::any();
+        let capacity: u64 = kani::any();
+        let next = reserve(used, requested, capacity);
+        assert!(next >= used);
+        if next != used {
+            assert!(requested > 0 && next <= capacity);
+            assert_eq!(next - used, requested);
+        } else {
+            assert!(requested == 0 || used > capacity || requested > capacity - used);
+        }
+        if used <= capacity {
+            assert!(next <= capacity);
+        }
+    }
+    #[kani::proof]
     fn no_credit_without_all_domains_and_coupling() {
         let o: u8 = kani::any();
         let n: u8 = kani::any();
