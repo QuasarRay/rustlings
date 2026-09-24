@@ -26,8 +26,7 @@ fn check_exercises_unsolved(
 
 
     // TODO: Restore this step using the contract above.
-    todo!("author_unsolved");
-
+    // TODO: Complete the missing operation.
     let mut progress_counter = ProgressCounter::new(&mut stdout, handles.len())?;
 
     for (exercise_name, handle) in handles {

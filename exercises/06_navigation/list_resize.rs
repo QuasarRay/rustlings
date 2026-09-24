@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn set_term_size(&mut self, width: u16, height: u16) {
         // TODO: Implement this operation using the contract above.
-        todo!("list_resize")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

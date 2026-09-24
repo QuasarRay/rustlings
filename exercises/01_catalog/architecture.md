@@ -1,6 +1,6 @@
 # Architecture description record
 
-**Record:** AD-001, Rebuild the Checker. **Revision:** 2. **Status:** implemented course design. **Date:** 2026-09-23. **Owner:** fork maintainers. **Baseline:** original engine `a650509c789da1656f813392b16aa1fa043b7f3e`, course audit starting at `1b871b5706c358ab9d31337f2e3dec3a493dbc0d`. **Audience:** learners, course authors, maintainers, and reviewers.
+**Record:** AD-001, Rebuild the Checker. **Revision:** 3. **Status:** implemented course design. **Date:** 2026-09-24. **Owner:** fork maintainers. **Baseline:** original engine `a650509c789da1656f813392b16aa1fa043b7f3e`, course audit starting at `1b871b5706c358ab9d31337f2e3dec3a493dbc0d`. **Audience:** learners, course authors, maintainers, and reviewers.
 
 This record uses the architecture-description concepts of [ISO/IEC/IEEE 42010:2022](https://www.iso.org/standard/74393.html): an entity of interest, stakeholders and concerns, viewpoints, views, model kinds, correspondences, and decision rationale. It is an ISO-aligned project record, not a claim of independently audited conformance to every clause of the paid standard.
 
@@ -57,7 +57,7 @@ flowchart TD
     A["Rustlings exercise checker"] --> B["Mission adapter"]
     B --> C["Prerequisite evidence"]
     C --> D["Compose original source"]
-    D --> E["Cargo Clippy and tests"]
+    D --> E["Cargo compilation, tests and Clippy"]
     E --> F["Pass or diagnostic"]
     F --> G["Prefix receipt and Rustlings progress"]
     H["Original source and future scaffold"] --> D
@@ -132,3 +132,15 @@ The host fork adds a course-specific subprocess policy and maintenance command. 
 ## Revision 2 evaluation record
 
 The [audit review](audit-review.md) maps every finding to evidence, remediation, or a justified boundary. The [maintenance guide](maintenance.md) defines the current cold-build, debug/release, cross-platform and mutation gates. These replace the earlier warm-cache assumption while retaining the original target. Active gaps are at most 16 reference lines, and optional hints are revealed in three stages. The release gate and CI use the same portable driver.
+
+## Revision 3: diagnostic and debugging view
+
+The diagnostic path addresses learner concerns C2/C3 and evidence concern C10. The real Rust compiler owns type/ownership/API diagnostics and suggestions. Course fixtures supply behavioral contracts with failure details. Starter omissions use ordinary incomplete code; no inserted diverging TODO macro makes the surrounding valid code unreachable. Missing algorithms still require design: compiler suggestions do not establish semantic correctness.
+
+The disposable checker orders compilation, compiled-input verification, behavioral debug/release checks, then strict linting. A successful repair must still pass every gate. The starter audit rejects both escaping defects and lint-only failures, preserving per-mission tool reports. A contract specifically checks preservation of failed-test causes without duplicated build warnings.
+
+The source-composition view maps generated coordinates to editable mission lines, accounting for line-count changes in every earlier replacement in the same file. Rust's messages and locations remain intact; mapped coordinates are additional navigation information. Reports identify their mission and contract. Reports are saved from the last failed attempt and must be refreshed after source changes.
+
+The course captures full native Rust traces in disposable checking processes. Presentation depth selects 20 more real frames per level, while `full` preserves the raw report. This is a documented course convention for numeric `RUST_BACKTRACE` values and the `workshop trace` command; it does not redefine native Rust or the exported project. Trace-only settings are excluded from prefix identity because child capture is normalized, while build settings remain identity inputs. The adapter propagates failure status without adding its own misleading panic trace.
+
+New decision D9: separate raw evidence, editable coordinates and display depth. This allows incremental debugging without changing compiler advice, exposing reference implementations, rerunning the same failure solely for more frames, or losing prerequisite certification. Tests cover progressive presentation, unknown trace formats, compiler-message preservation, coordinate translation and environment identity. The pinned archive and all canonical repair bodies remain unchanged.

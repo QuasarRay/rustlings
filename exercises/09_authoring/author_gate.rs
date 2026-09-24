@@ -35,7 +35,7 @@ pub fn check(require_solutions: bool) -> Result<()> {
     let cmd_runner = Box::leak(Box::new(CmdRunner::build()?));
     let info_file = Box::leak(Box::new(info_file));
 
-    todo!("author_gate");
+    // TODO: Complete the missing operation.
     check_solutions(require_solutions, info_file, cmd_runner)?;
 
     println!("Everything looks fine!");

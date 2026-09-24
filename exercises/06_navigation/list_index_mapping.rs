@@ -25,7 +25,7 @@ macro_rules! repair {
                 .iter()
                 .enumerate()
                 .filter(|(_, exercise)| exercise.done)
-                .nth(todo!("list_index_mapping"))
+                .nth()
                 .context("Invalid selection index")
                 .map(|(ind, _)| ind),
             Filter::Pending => self

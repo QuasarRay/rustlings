@@ -23,7 +23,7 @@ pub fn file_path<'a, W: CountedWrite<'a>>(
     f: impl FnOnce(&mut W) -> io::Result<()>,
 ) -> io::Result<()> {
     // TODO: Implement this operation using the contract above.
-    todo!("file_link_frame")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn check_all_exercises(&mut self, stdout: &mut StdoutLock) -> Result<ExercisesProgress> {
         // TODO: Implement this operation using the contract above.
-        todo!("watch_check_all")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

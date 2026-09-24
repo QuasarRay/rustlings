@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 fn create_rel_dir(dir_name: &str, current_dir: &str) -> Result<()> {
     // TODO: Implement this operation using the contract above.
-    todo!("author_directories")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

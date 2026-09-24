@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 pub fn canonicalize(path: &str) -> Option<String> {
     // TODO: Implement this operation using the contract above.
-    todo!("canonical_paths")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

@@ -44,8 +44,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("watch_render");
-
+        // TODO: Complete the missing operation.
         progress_bar(
             stdout,
             self.app_state.n_done(),

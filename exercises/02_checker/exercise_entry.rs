@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     fn run_exercise(&self, output: Option<&mut Vec<u8>>, cmd_runner: &CmdRunner) -> Result<bool> {
         // TODO: Implement this operation using the contract above.
-        todo!("exercise_entry")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

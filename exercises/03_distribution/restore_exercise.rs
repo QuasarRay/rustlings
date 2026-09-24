@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn write_exercise_to_disk(&self, exercise_ind: usize, path: &str) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("restore_exercise")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

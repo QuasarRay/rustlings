@@ -14,6 +14,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+mod diagnostics;
 mod process;
 
 #[derive(Debug)]
@@ -173,18 +174,53 @@ fn reconcile(directory: &Path, files: &Files) -> Result<()> {
     visit(directory, directory, files)
 }
 
-fn environment_identity(root: &Path) -> Result<Vec<u8>> {
+fn tool(program: &str) -> Command {
+    let mut command = Command::new(program);
+    process::prepare_course_command(&mut command);
+    command
+}
+
+fn environment_inputs(root: &Path) -> Result<Files> {
     let mut inputs = Files::new();
+    // Cargo launches adapters through rustup, while Rustlings also executes
+    // them directly. Track the selected toolchain, not proxy bookkeeping.
+    let sysroot = tool("rustc").args(["--print", "sysroot"]).output()?;
+    if !sysroot.status.success() {
+        return fail("Could not resolve the Rust toolchain sysroot");
+    }
+    inputs.insert(
+        "rust-sysroot".into(),
+        str::from_utf8(&sysroot.stdout)?.trim().to_owned(),
+    );
     inputs.insert(
         "platform".into(),
         format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
     );
     for (key, value) in std::env::vars_os() {
         let name = key.to_string_lossy();
+        if name.eq_ignore_ascii_case("PATH") {
+            continue;
+        }
+        // Trace presentation never changes the checked source or prerequisites.
+        // Child checks always record full traces; the display depth is separate.
+        // Proxy labels and Cargo home defaults are represented by the resolved
+        // sysroot and cargo-home inputs instead of their launch-time spelling.
+        if [
+            "RUST_BACKTRACE",
+            "RUST_LIB_BACKTRACE",
+            "RUSTUP_HOME",
+            "RUSTUP_TOOLCHAIN",
+            "RUSTUP_TOOLCHAIN_SOURCE",
+            "RUST_RECURSION_COUNT",
+            "CARGO_HOME",
+        ]
+        .contains(&name.as_ref())
+        {
+            continue;
+        }
         if name.starts_with("RUST")
             || name.starts_with("CARGO_")
             || [
-                "PATH",
                 "CC",
                 "CXX",
                 "AR",
@@ -208,16 +244,21 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
             inputs.insert(format!("env:{name}"), format!("{value:?}"));
         }
     }
+    if let Some(path) = process::tool_path() {
+        inputs.insert("env:PATH".into(), format!("{path:?}"));
+    }
     let mut directories: Vec<_> = root
         .join("target/workshop/engine")
         .ancestors()
         .map(Path::to_path_buf)
         .collect();
     if let Some(home) = std::env::var_os("CARGO_HOME")
+        .filter(|p| !p.is_empty())
         .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
-        .or_else(|| std::env::var_os("USERPROFILE").map(|p| PathBuf::from(p).join(".cargo")))
+        .or_else(|| std::env::home_dir().map(|p| p.join(".cargo")))
     {
+        let home = home.canonicalize().unwrap_or(home);
+        inputs.insert("cargo-home".into(), format!("{home:?}"));
         directories.push(home.parent().unwrap_or(&home).to_path_buf());
         for name in ["config", "config.toml"] {
             let path = home.join(name);
@@ -240,7 +281,13 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
             }
         }
     }
-    Ok(serialize(&inputs, "course-environment-v1"))
+    Ok(inputs)
+}
+fn environment_identity(root: &Path) -> Result<Vec<u8>> {
+    Ok(serialize(
+        &environment_inputs(root)?,
+        "course-environment-v1",
+    ))
 }
 // OS-owned lock lifetime survives neither normal exit nor interruption.
 // Keeping the file itself is harmless: the lock belongs to this open handle.
@@ -295,9 +342,10 @@ impl Workshop {
         identity.extend_from_slice(map.as_bytes());
         identity.extend_from_slice(&fs::read(support.join("grader.rs"))?);
         identity.extend_from_slice(&fs::read(support.join("process.rs"))?);
+        identity.extend_from_slice(&fs::read(support.join("diagnostics.rs"))?);
         identity.extend_from_slice(&environment_identity(&root)?);
         for tool in ["rustc", "cargo"] {
-            let out = Command::new(tool)
+            let out = self::tool(tool)
                 .arg("--version")
                 .arg("--verbose")
                 .output()?;
@@ -429,7 +477,7 @@ impl Workshop {
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
-        // One budget owns queueing, Clippy, and tests together. The course host
+        // One budget owns queueing, compilation, tests and Clippy together. The course host
         // grants 600 seconds, leaving 60 seconds for startup and cleanup.
         let deadline = Instant::now() + Duration::from_secs(540);
         let _lock = self.lock(deadline)?;
@@ -473,15 +521,9 @@ impl Workshop {
         }
         test_args.extend(["--", "--test-threads=1"]);
         let mut commands: Vec<&[&str]> = vec![
-            &[
-                "clippy",
-                "--locked",
-                "--workspace",
-                "--all-targets",
-                "--",
-                "-D",
-                "warnings",
-            ],
+            // Type errors belong to the repair. Lints about unused scaffold are
+            // useful only after the implementation satisfies its contracts.
+            &["check", "--locked", "--workspace", "--all-targets"],
             &[
                 "test",
                 "--locked",
@@ -507,12 +549,23 @@ impl Workshop {
                 "--test-threads=1",
             ]);
         }
+        commands.push(&[
+            "clippy",
+            "--locked",
+            "--workspace",
+            "--all-targets",
+            "--",
+            "-D",
+            "warnings",
+        ]);
         for args in commands {
-            let mut cmd = Command::new("cargo");
+            let mut cmd = tool("cargo");
             cmd.args(args)
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
                 .env(BUILD_ID_ENV, &build_id)
+                .env("RUST_BACKTRACE", "full")
+                .env("RUST_LIB_BACKTRACE", "full")
                 .env("CARGO_TERM_COLOR", "never");
             if std::env::var_os("CARGO_BUILD_JOBS").is_none() {
                 cmd.env("CARGO_BUILD_JOBS", "2");
@@ -577,7 +630,55 @@ impl Workshop {
         }
         Ok((passed, report))
     }
-    fn check(&self, id: usize, role: &str, source: &str) -> Result<()> {
+    fn origins(
+        &self,
+        repairs: &[String],
+        role: &str,
+        source: &str,
+        source_path: Option<&Path>,
+    ) -> Result<Vec<diagnostics::Origin>> {
+        let mut origins = Vec::new();
+        for (m, body) in self.missions.iter().zip(repairs) {
+            let mut first = 1 + self.base[&m.file][..m.start]
+                .bytes()
+                .filter(|b| *b == b'\n')
+                .count();
+            // Earlier missions can occur later in the original file. Apply only
+            // replacements physically before this one when translating lines.
+            for (other, replacement) in self.missions.iter().zip(repairs) {
+                if other.file == m.file && other.start < m.start {
+                    first += replacement.bytes().filter(|b| *b == b'\n').count();
+                    first -= self.base[&m.file][other.start..other.end]
+                        .bytes()
+                        .filter(|b| *b == b'\n')
+                        .count();
+                }
+            }
+            let editable = format!("{role}/{}/{}.rs", m.dir, m.name);
+            let current = m.id == repairs.len();
+            let text = if current {
+                source.to_owned()
+            } else {
+                fs::read_to_string(self.root.join(&editable))?
+            };
+            let header = text.split_once(BEGIN).ok_or("missing repair marker")?.0;
+            origins.push(diagnostics::Origin {
+                generated: m.file.clone(),
+                first,
+                last: first + body.bytes().filter(|b| *b == b'\n').count(),
+                editable: if current {
+                    source_path
+                        .map(|p| p.display().to_string())
+                        .unwrap_or(editable)
+                } else {
+                    editable
+                },
+                editable_first: header.bytes().filter(|b| *b == b'\n').count() + 2,
+            });
+        }
+        Ok(origins)
+    }
+    fn check(&self, id: usize, role: &str, source: &str, source_path: Option<&Path>) -> Result<()> {
         if !["exercises", "solutions"].contains(&role) {
             return fail("invalid source role");
         }
@@ -588,13 +689,55 @@ impl Workshop {
         let mut repairs = self.prior_repairs(id - 1, role)?;
         repairs.push(fragment(source)?);
         let files = self.assembled(&repairs)?;
-        let (pass, report) = self.evaluate(&files, false)?;
-        if !pass {
+        let result = self.evaluate(&files, false);
+        let (code, report) = match result {
+            Ok((true, _)) => (0, String::new()),
+            Ok((false, report)) => (1, report),
+            Err(error) => (
+                error.downcast_ref::<GradingError>().map_or(2, |e| e.code),
+                error.to_string(),
+            ),
+        };
+        if code != 0 {
+            let origins = self.origins(&repairs, role, source, source_path)?;
+            let active = origins.last().ok_or("missing current repair")?;
+            let contract = fs::read_to_string(self.root.join("exercises/01_catalog/hints.tsv"))?
+                .lines()
+                .find_map(|line| {
+                    let mut fields = line.split('\t');
+                    (fields.next() == Some(m.name.as_str()))
+                        .then(|| fields.next().unwrap_or_default().to_owned())
+                })
+                .unwrap_or_default();
+            let label = if code == 1 {
+                "REJECTED"
+            } else {
+                "INFRASTRUCTURE"
+            };
+            let header = format!(
+                "{label}: mission {id:03} {}.\nContract: {contract}\nRepair: {}:{} (restores {}:{}..{}).\n{}",
+                m.name,
+                active.editable,
+                active.editable_first,
+                active.generated,
+                active.first,
+                active.last,
+                diagnostics::locations(&report, &origins)
+            );
+            let path = self.cache.join(format!("diagnostics/{id:03}-{role}.log"));
+            write_changed(&path, format!("{header}{report}").as_bytes())?;
+            let displayed = if code == 1 {
+                diagnostics::failure_report(&report)
+            } else {
+                report
+            };
             return outcome(
-                1,
+                code,
                 format!(
-                    "REJECTED: mission {:03} {}.\nEdit exercises/{}/{}.rs (restores {}), not target/workshop/engine.\n{}",
-                    id, m.name, m.dir, m.name, m.file, report
+                    "{header}{}\nFull tool report: {}\nInspect more frames: rustlings workshop trace {} 1 (then 2, 3, or full).\n",
+                    diagnostics::render(&displayed, diagnostics::TraceDepth::environment()),
+                    path.display(),
+                    m.name
                 ),
             );
         }
@@ -614,6 +757,26 @@ impl Workshop {
         }
         Ok(())
     }
+    fn trace(&self, name: &str, depth: &str) -> Result<()> {
+        let m = self
+            .missions
+            .iter()
+            .find(|m| m.name == name)
+            .ok_or("unknown mission name")?;
+        let path = self
+            .cache
+            .join(format!("diagnostics/{:03}-exercises.log", m.id));
+        let report = fs::read_to_string(&path).map_err(|_| {
+            format!("No saved learner diagnostic for {name}. Run that mission in Rustlings first.")
+        })?;
+        let depth = diagnostics::TraceDepth::parse(depth)?;
+        println!(
+            "Saved tool report for {name}; rerun the mission after source changes.\n{}\nFull report: {}",
+            diagnostics::render(&report, depth),
+            path.display()
+        );
+        Ok(())
+    }
     fn audit(&self) -> Result<()> {
         let baseline: Vec<_> = self.missions.iter().map(|m| self.original(m)).collect();
         let solutions: Vec<_> = self
@@ -629,25 +792,47 @@ impl Workshop {
         if !pass {
             return fail(format!("Reference checker failed:\n{report}"));
         }
+        let mut unhelpful = Vec::new();
+        let mut evidence = String::from("id\tmission\trejection_stage\n");
         for m in &self.missions {
             let mut repairs = baseline.clone();
             repairs[m.id - 1] = self.read_fragment(m, "exercises")?;
             if repairs[m.id - 1] == baseline[m.id - 1] {
                 return fail(format!("{} is already solved", m.name));
             }
-            let (pass, _) = self.evaluate(&self.assembled(&repairs)?, true)?;
-            if pass {
-                return fail(format!(
-                    "Injected defect in {} escaped compilation and behavioral checks",
-                    m.name
-                ));
+            let (pass, report) = self.evaluate(&self.assembled(&repairs)?, true)?;
+            let stage = if pass {
+                "ESCAPED"
+            } else if report
+                .lines()
+                .rev()
+                .find(|l| l.starts_with("cargo "))
+                .is_some_and(|l| l.starts_with("cargo clippy "))
+            {
+                "LINT_ONLY"
+            } else if report.contains("test result: FAILED") {
+                "CONTRACT"
+            } else {
+                "COMPILER"
+            };
+            evidence.push_str(&format!("{}\t{}\t{stage}\n", m.id, m.name));
+            fs::write(self.cache.join("starter-audit.tsv"), &evidence)?;
+            fs::write(self.cache.join(format!("starter-{:03}.log", m.id)), &report)?;
+            if pass || stage == "LINT_ONLY" {
+                unhelpful.push(format!("{}: {stage}", m.name));
             }
             println!(
-                "{:03}/{} verified: starter FAIL, reference PASS — {}",
+                "{:03}/{} starter {stage}, reference PASS — {}",
                 m.id,
                 self.missions.len(),
                 m.name
             );
+        }
+        if !unhelpful.is_empty() {
+            return fail(format!(
+                "Starters must fail compilation or a behavioral contract, without relying on lint denial:\n{}",
+                unhelpful.join("\n")
+            ));
         }
         let summary = format!(
             "{} independently failing starters; {} passing reference repairs; byte-identical reference reconstruction; original and added regression tests passed.\n",
@@ -756,7 +941,9 @@ impl Workshop {
                 if pass && filter.is_some() {
                     (pass, report) = self.evaluate(&files, true)?;
                 }
-                let ran_tests = report.contains("cargo test --locked");
+                // An identity test or a failed test compilation is not evidence
+                // that the behavioral fault was reached by a running test.
+                let ran_tests = report.contains("test result: FAILED");
                 let macro_execution =
                     m.file == "rustlings-macros/src/lib.rs" && report.contains(&marker);
                 let observed_fault = kind == "value" || report.contains(&marker);
@@ -869,14 +1056,19 @@ fn run() -> Result<()> {
             let role = args.get(4).ok_or("missing role")?;
             let mut source = String::new();
             std::io::stdin().read_to_string(&mut source)?;
-            workshop.check(id, role, &source)
+            workshop.check(id, role, &source, None)
         }
         "check-file" => {
             let id = args.get(3).ok_or("missing mission")?.parse()?;
             let role = args.get(4).ok_or("missing role")?;
             let source = fs::read_to_string(args.get(5).ok_or("missing source path")?)?;
-            workshop.check(id, role, &source)
+            workshop.check(id, role, &source, Some(Path::new(&args[5])))
         }
+        "trace" => workshop.trace(
+            args.get(3)
+                .ok_or("usage: grader ROOT trace MISSION [DEPTH]")?,
+            args.get(4).map(String::as_str).unwrap_or("1"),
+        ),
         "export" => workshop.export(
             Path::new(args.get(3).ok_or("missing destination")?),
             args.get(4).map(String::as_str).unwrap_or("exercises"),
@@ -913,6 +1105,51 @@ mod verifier_tests {
             let _ = fs::remove_dir_all(&self.0);
         }
     }
+    fn diagnostic_fixture(tmp: &Scratch, source: &str) -> Workshop {
+        Workshop {
+            root: tmp.0.clone(),
+            cache: tmp.0.join("workshop"),
+            base: Files::from([
+                ("Cargo.toml".into(), "[package]\nname='rustlings'\nversion='0.0.0'\nedition='2024'\n[workspace]\nmembers=['rustlings-macros']\n".into()),
+                ("Cargo.lock".into(), "version = 4\n[[package]]\nname = 'rustlings'\nversion = '0.0.0'\n[[package]]\nname = 'rustlings-macros'\nversion = '0.0.0'\n".into()),
+                ("src/main.rs".into(), source.into()),
+                ("rustlings-macros/Cargo.toml".into(), "[package]\nname='rustlings-macros'\nversion='0.0.0'\nedition='2024'\n".into()),
+                ("rustlings-macros/src/lib.rs".into(), "".into()),
+            ]),
+            probes: Files::new(),
+            missions: Vec::new(),
+            identity: "diagnostic-fixture".into(),
+        }
+    }
+    #[test]
+    fn compiler_errors_and_contract_failures_precede_scaffold_lints() {
+        let tmp = Scratch::new();
+        fs::create_dir(tmp.0.join("workshop")).unwrap();
+        let workshop = diagnostic_fixture(
+            &tmp,
+            "fn wants_str(_: &str) {} fn main() { wants_str(String::new()); }\n",
+        );
+        let (pass, report) = workshop
+            .evaluate_filtered(&workshop.base, Some("contract"))
+            .unwrap();
+        assert!(!pass);
+        assert!(report.contains("error[E0308]"), "{report}");
+        assert!(report.contains("consider borrowing here"), "{report}");
+        assert!(!report.contains("cargo clippy"), "{report}");
+
+        let workshop = diagnostic_fixture(
+            &tmp,
+            "fn main() { let unrelated_lint = 1; }\n#[test] fn contract() { assert_eq!(2, 3, \"counter must advance once\"); }\n",
+        );
+        let (pass, report) = workshop
+            .evaluate_filtered(&workshop.base, Some("contract"))
+            .unwrap();
+        assert!(!pass);
+        assert!(report.contains("counter must advance once"), "{report}");
+        assert!(report.contains("left: 2"), "{report}");
+        assert!(report.contains("right: 3"), "{report}");
+        assert!(!report.contains("cargo clippy"), "{report}");
+    }
     #[test]
     fn removes_untracked_build_inputs_and_preserves_expected_files() {
         let tmp = Scratch::new();
@@ -942,6 +1179,151 @@ mod verifier_tests {
         let after = environment_identity(&tmp.0).unwrap();
         assert_ne!(before, after);
         assert_eq!(after, environment_identity(&tmp.0).unwrap());
+    }
+    #[test]
+    fn trace_depth_preserves_receipts_but_rustflags_change_identity() {
+        const CHILD: &str = "WORKSHOP_ENVIRONMENT_TEST_ROOT";
+        if let Some(root) = std::env::var_os(CHILD) {
+            for (key, value) in environment_inputs(Path::new(&root)).unwrap() {
+                println!("ENVIRONMENT_FIELD={key}\t{}", digest(value.as_bytes()));
+            }
+            println!(
+                "ENVIRONMENT_ID={}",
+                digest(&environment_identity(Path::new(&root)).unwrap())
+            );
+            return;
+        }
+        let tmp = Scratch::new();
+        let mut identities = Vec::new();
+        for (depth, flags) in [
+            ("0", ""),
+            ("1", ""),
+            ("3", ""),
+            ("full", ""),
+            ("3", "--cfg changed_build"),
+        ] {
+            let (status, output) = process::capture(
+                Command::new(std::env::current_exe().unwrap())
+                    .args(["--exact", "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity", "--nocapture"])
+                    .env(CHILD, &tmp.0).env("RUST_BACKTRACE", depth)
+                    .env("RUST_LIB_BACKTRACE", depth).env("RUSTFLAGS", flags),
+                Duration::from_secs(10),
+            ).unwrap();
+            assert!(status.success(), "{}", String::from_utf8_lossy(&output));
+            identities.push(
+                String::from_utf8(output)
+                    .unwrap()
+                    .lines()
+                    .find_map(|l| l.strip_prefix("ENVIRONMENT_ID="))
+                    .unwrap()
+                    .to_owned(),
+            );
+        }
+        assert!(identities[..4].iter().all(|id| id == &identities[0]));
+        assert_ne!(identities[0], identities[4]);
+    }
+    #[test]
+    fn cargo_and_direct_adapter_environments_share_identity() {
+        assert_cargo_and_direct_identity(false);
+    }
+    #[cfg(windows)]
+    #[test]
+    fn windows_default_cargo_home_ignores_unix_shell_home() {
+        assert_cargo_and_direct_identity(true);
+    }
+    fn assert_cargo_and_direct_identity(use_windows_default_home: bool) {
+        let tmp = Scratch::new();
+        write_changed(
+            &tmp.0.join("Cargo.toml"),
+            b"[package]\nname='environment_probe'\nversion='0.0.0'\nedition='2024'\n[workspace]\n",
+        )
+        .unwrap();
+        write_changed(&tmp.0.join("src/main.rs"), br#"
+fn main() {
+    let status = std::process::Command::new(std::env::var_os("WORKSHOP_TEST_EXE").unwrap())
+        .args(["--exact", "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity", "--nocapture"])
+        .status().unwrap();
+    std::process::exit(status.code().unwrap_or(2));
+}
+"#).unwrap();
+        let mut direct = Command::new(std::env::current_exe().unwrap());
+        direct.args([
+            "--exact",
+            "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity",
+            "--nocapture",
+        ]);
+        let mut cargo = Command::new("cargo");
+        cargo
+            .args(["run", "--offline", "--quiet", "--manifest-path"])
+            .arg(tmp.0.join("Cargo.toml"));
+        let mut identities = Vec::new();
+        let mut fields = Vec::new();
+        for cmd in [&mut direct, &mut cargo] {
+            process::prepare_course_command(cmd);
+            if use_windows_default_home {
+                // Cargo uses USERPROFILE on Windows even if Git Bash supplies
+                // a different HOME. Model an installed binary's direct launch.
+                cmd.env_remove("CARGO_HOME")
+                    .env("HOME", tmp.0.join("shell-home"));
+            }
+            cmd.env("WORKSHOP_ENVIRONMENT_TEST_ROOT", &tmp.0)
+                .env("WORKSHOP_TEST_EXE", std::env::current_exe().unwrap())
+                .env("CARGO_TARGET_DIR", tmp.0.join("target"));
+            let (status, output) = process::capture(cmd, Duration::from_secs(60)).unwrap();
+            let output = String::from_utf8(output).unwrap();
+            assert!(status.success(), "{output}");
+            fields.push(
+                output
+                    .lines()
+                    .filter_map(|l| l.strip_prefix("ENVIRONMENT_FIELD="))
+                    .filter_map(|l| l.split_once('\t'))
+                    .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                    .collect::<BTreeMap<_, _>>(),
+            );
+            identities.push(
+                output
+                    .lines()
+                    .find_map(|l| l.strip_prefix("ENVIRONMENT_ID="))
+                    .expect("identity probe did not run")
+                    .to_owned(),
+            );
+        }
+        assert_eq!(
+            identities[0],
+            identities[1],
+            "Cargo's proxy environment must not relock a directly certified repair; differing input names: {:?}",
+            fields[0]
+                .keys()
+                .chain(fields[1].keys())
+                .filter(|k| fields[0].get(*k) != fields[1].get(*k))
+                .collect::<std::collections::BTreeSet<_>>()
+        );
+    }
+    #[test]
+    fn caller_tool_path_changes_still_invalidate_identity() {
+        let tmp = Scratch::new();
+        let original = process::tool_path().unwrap();
+        let changed =
+            std::env::join_paths(std::env::split_paths(&original).chain([tmp.0.clone()])).unwrap();
+        let mut identities = Vec::new();
+        for path in [original, changed] {
+            let (status, output) = process::capture(Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity", "--nocapture"])
+                .env("WORKSHOP_ENVIRONMENT_TEST_ROOT", &tmp.0).env("WORKSHOP_TOOL_PATH", path), Duration::from_secs(10)).unwrap();
+            let output = String::from_utf8(output).unwrap();
+            assert!(status.success(), "{output}");
+            identities.push(
+                output
+                    .lines()
+                    .find_map(|l| l.strip_prefix("ENVIRONMENT_ID="))
+                    .unwrap()
+                    .to_owned(),
+            );
+        }
+        assert_ne!(
+            identities[0], identities[1],
+            "the caller's tool search path remains a semantic input"
+        );
     }
     #[test]
     fn a_persisted_tool_failure_does_not_block_retrying_unchanged_source() {

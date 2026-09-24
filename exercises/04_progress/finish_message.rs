@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn render_final_message(&self, stdout: &mut StdoutLock) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("finish_message")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

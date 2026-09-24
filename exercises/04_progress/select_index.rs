@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn set_current_exercise_ind(&mut self, exercise_ind: usize) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("select_index")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

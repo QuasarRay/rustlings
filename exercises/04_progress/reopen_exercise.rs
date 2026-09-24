@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn set_pending(&mut self, exercise_ind: usize) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("reopen_exercise")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

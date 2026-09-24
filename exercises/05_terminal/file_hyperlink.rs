@@ -23,7 +23,7 @@ pub fn terminal_file_link<'a>(
     canonical_path: &str,
 ) -> io::Result<()> {
     // TODO: Implement this operation using the contract above.
-    todo!("file_hyperlink")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

@@ -24,7 +24,7 @@ macro_rules! repair {
         output: Option<&mut Vec<u8>>,
     ) -> Result<bool> {
         // TODO: Implement this operation using the contract above.
-        todo!("binary_location")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

@@ -49,8 +49,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("checker_pipeline");
-
+        // TODO: Complete the missing operation.
         let cwd_buf;
         let cwd = if let Some(dir) = self.dir() {
             cwd_buf = format!("exercises/{dir}");

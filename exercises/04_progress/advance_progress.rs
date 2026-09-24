@@ -34,8 +34,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("advance_progress");
-
+        // TODO: Complete the missing operation.
         if let Some(first_pending_exercise_ind) = self.check_all_exercises(stdout)? {
             self.set_current_exercise_ind(first_pending_exercise_ind)?;
 

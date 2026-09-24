@@ -19,8 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 fn handle_list(app_state: &mut AppState, stdout: &mut StdoutLock) -> Result<()> {
     // TODO: Restore this step using the contract above.
-    todo!("list_keys");
-
+    // TODO: Complete the missing operation.
     loop {
         match event::read().context("Failed to read terminal event")? {
             Event::Key(key) => {

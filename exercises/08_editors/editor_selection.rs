@@ -28,7 +28,7 @@ macro_rules! repair {
 
         if let Some(cmd) = cmd {
             let shlex = &mut Shlex::new(&cmd);
-            let program = todo!("editor_selection");
+            let program = shlex.next.context("Program missing in `--edit-cmd`")?;
             let args = shlex.collect();
             if shlex.had_error {
                 bail!("Failed to parse the command in `--edit-cmd`");

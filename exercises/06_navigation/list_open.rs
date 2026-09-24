@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn selected_to_current_exercise(&mut self) -> Result<bool> {
         // TODO: Implement this operation using the contract above.
-        todo!("list_open")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

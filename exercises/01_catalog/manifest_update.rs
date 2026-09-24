@@ -23,7 +23,7 @@ pub fn updated_cargo_toml(
     exercise_path_prefix: &[u8],
 ) -> Result<Vec<u8>> {
     // TODO: Implement this operation using the contract above.
-    todo!("manifest_update")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

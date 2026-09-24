@@ -22,7 +22,7 @@ fn watch_list_loop(
     notify_exercise_names: Option<&'static [&'static [u8]]>,
 ) -> Result<()> {
     // TODO: Implement this operation using the contract above.
-    todo!("watch_list_transition")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

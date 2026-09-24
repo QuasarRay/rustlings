@@ -43,8 +43,7 @@ pub fn new(path: &Path, no_git: bool) -> Result<()> {
 
 
     // TODO: Restore this step using the contract above.
-    todo!("author_new_course");
-
+    // TODO: Complete the missing operation.
     write_rel_file("Cargo.toml", &dir_path_str, CARGO_TOML)?;
 
     write_rel_file("README.md", &dir_path_str, README)?;

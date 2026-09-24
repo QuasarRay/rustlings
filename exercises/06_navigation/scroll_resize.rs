@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn set_n_rows(&mut self, n_rows: usize) {
         // TODO: Implement this operation using the contract above.
-        todo!("scroll_resize")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

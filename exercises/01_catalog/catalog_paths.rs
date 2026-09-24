@@ -23,7 +23,7 @@ macro_rules! repair {
             // exercises/ + / + .rs
             let mut path = String::with_capacity(14 + dir.len() + self.name.len());
             path.push_str("exercises/");
-            todo!("catalog_paths");
+            path.push(dir); // TODO: Append the directory text.
             path.push('/');
             path
         } else {

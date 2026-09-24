@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn next_exercise(&mut self, stdout: &mut StdoutLock) -> Result<ExercisesProgress> {
         // TODO: Implement this operation using the contract above.
-        todo!("watch_advance")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

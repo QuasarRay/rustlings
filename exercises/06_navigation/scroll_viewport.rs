@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn set_max_n_rows_to_display(&mut self, max_n_rows_to_display: usize) {
         // TODO: Implement this operation using the contract above.
-        todo!("scroll_viewport")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

@@ -38,8 +38,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("watch_prompt");
-
+        // TODO: Complete the missing operation.
         if !self.show_hint {
             show_key(b'h', b":hint / ")?;
         }

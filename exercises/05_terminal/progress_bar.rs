@@ -43,8 +43,7 @@ pub fn progress_bar<'a>(
 
 
     // TODO: Restore this step using the contract above.
-    todo!("progress_bar");
-
+    // TODO: Complete the missing operation.
     stdout.queue(SetForegroundColor(Color::Green))?;
     for _ in 0..filled {
         stdout.write_all(b"#")?;

@@ -22,7 +22,7 @@ where
     C: AsRef<[u8]>,
 {
     // TODO: Implement this operation using the contract above.
-    todo!("author_files")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

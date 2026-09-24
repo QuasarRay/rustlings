@@ -39,8 +39,7 @@ pub fn run(app_state: &mut AppState) -> Result<ExitCode> {
 
 
     // TODO: Restore this step using the contract above.
-    todo!("single_run_result");
-
+    // TODO: Complete the missing operation.
     if let Some(solution_path) = app_state.current_solution_path()? {
         stdout.write_all(b"\n")?;
         solution_link_line(&mut stdout, &solution_path, app_state.emit_file_links())?;

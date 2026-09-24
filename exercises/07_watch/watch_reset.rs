@@ -22,8 +22,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("watch_reset");
-
+        // TODO: Complete the missing operation.
         {
             let mut stdin = io::stdin().lock();
             let mut answer = [0];

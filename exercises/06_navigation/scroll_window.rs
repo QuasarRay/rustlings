@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     fn update_offset(&mut self) {
         // TODO: Implement this operation using the contract above.
-        todo!("scroll_window")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

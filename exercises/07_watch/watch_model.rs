@@ -30,8 +30,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("watch_model");
-
+        // TODO: Complete the missing operation.
         Ok(Self {
             app_state,
             output: Vec::with_capacity(OUTPUT_CAPACITY),

@@ -23,7 +23,7 @@ fn update_cargo_toml(
     exercise_path_prefix: &[u8],
 ) -> Result<()> {
     // TODO: Implement this operation using the contract above.
-    todo!("author_update_manifest")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

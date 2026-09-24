@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn join(self) -> Result<Option<Editor>> {
         // TODO: Implement this operation using the contract above.
-        todo!("editor_join")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

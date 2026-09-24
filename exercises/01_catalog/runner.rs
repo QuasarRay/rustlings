@@ -16,7 +16,7 @@ pub fn run(mission: usize, source: &str) {
         .expect("run from the initialized course or its repository");
     let support = root.join("exercises/01_catalog");
     let mut hash = DefaultHasher::new();
-    for input in ["grader.rs", "process.rs"] {
+    for input in ["grader.rs", "process.rs", "diagnostics.rs"] {
         fs::read(support.join(input))
             .expect("read course verifier")
             .hash(&mut hash);
@@ -88,6 +88,9 @@ pub fn run(mission: usize, source: &str) {
             }
             _ => "INFRA_ERROR: the verifier could not judge your repair; read the diagnostic above",
         };
-        panic!("{reason}");
+        // The child already emitted the real compiler/test diagnostic. A panic
+        // here would add a second, misleading backtrace into the course adapter.
+        eprintln!("{reason}");
+        std::process::exit(status.code().unwrap_or(2));
     }
 }

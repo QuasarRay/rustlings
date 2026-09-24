@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 fn program_exists(program: &str) -> bool {
     // TODO: Implement this operation using the contract above.
-    todo!("editor_discovery")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

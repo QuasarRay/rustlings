@@ -29,8 +29,7 @@ fn check_cargo_toml(
 
 
     // TODO: Restore this step using the contract above.
-    todo!("author_manifest");
-
+    // TODO: Complete the missing operation.
     if old_bins != new_bins {
         if cfg!(debug_assertions) {
             bail!(

@@ -19,8 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 fn check_info_file_exercises(info_file: &InfoFile) -> Result<HashSet<PathBuf>> {
     // TODO: Restore this step using the contract above.
-    todo!("author_catalog");
-
+    // TODO: Complete the missing operation.
     let mut file_buf = String::with_capacity(1 << 14);
     for exercise_info in &info_file.exercises {
         let name = exercise_info.name;

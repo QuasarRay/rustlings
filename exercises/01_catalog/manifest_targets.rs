@@ -25,7 +25,7 @@ pub fn append_bins(
     buf.push(b'\n');
     for exercise_info in exercise_infos {
         buf.extend_from_slice(b"  { name = \"");
-        todo!("manifest_targets");
+        // TODO: Complete the missing operation.
         buf.extend_from_slice(b"\", path = \"");
         buf.extend_from_slice(exercise_path_prefix);
         buf.extend_from_slice(b"exercises/");

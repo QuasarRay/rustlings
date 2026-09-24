@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
     pub fn set_current_exercise_by_name(&mut self, name: &str) -> Result<()> {
         // TODO: Implement this operation using the contract above.
-        todo!("select_name")
+        // TODO: Complete the missing operation.
     }
 // END RUSTLINGS REPAIR
     };

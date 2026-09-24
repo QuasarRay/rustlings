@@ -19,7 +19,7 @@ macro_rules! repair {
 // BEGIN RUSTLINGS REPAIR
 pub fn close_pane(pane_id: &str) -> Result<()> {
     // TODO: Implement this operation using the contract above.
-    todo!("pane_close")
+    // TODO: Complete the missing operation.
 }
 // END RUSTLINGS REPAIR
     };

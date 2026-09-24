@@ -18,7 +18,7 @@ macro_rules! repair {
     () => {
 // BEGIN RUSTLINGS REPAIR
 fn check_exercises(info_file: &'static InfoFile, cmd_runner: &'static CmdRunner) -> Result<()> {
-    match todo!("author_format") {
+    match info_file.format_version.cmp(CURRENT_FORMAT_VERSION) {
         Ordering::Less => bail!(
             "`format_version` < {CURRENT_FORMAT_VERSION} (supported version)\n\
              Please migrate to the latest format version"

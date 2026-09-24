@@ -8,6 +8,19 @@ use std::{
     time::{Duration, Instant},
 };
 
+/// Cargo adds loader directories to PATH on Windows. Keep the caller's tool
+/// search path through both Cargo-launched and directly launched adapters, and
+/// use that same path when their verifier starts its own tools. Cargo may then
+/// add the restored project's own loader directories to its test processes.
+pub fn tool_path() -> Option<std::ffi::OsString> {
+    std::env::var_os("WORKSHOP_TOOL_PATH").or_else(|| std::env::var_os("PATH"))
+}
+pub fn prepare_course_command(cmd: &mut Command) {
+    if let Some(path) = tool_path() {
+        cmd.env("WORKSHOP_TOOL_PATH", &path).env("PATH", path);
+    }
+}
+
 // Kill descendants as well as the process group: a nested tool can create its
 // own group. Collect before terminating the parent so PPIDs are still usable.
 fn terminate(child: &mut Child) {

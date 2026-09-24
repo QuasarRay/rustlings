@@ -26,8 +26,7 @@ macro_rules! repair {
 
 
         // TODO: Restore this step using the contract above.
-        todo!("list_render");
-
+        // TODO: Complete the missing operation.
         // Rows
         let iter = self.app_state.exercises().iter().enumerate();
         let n_displayed_rows = match self.filter {

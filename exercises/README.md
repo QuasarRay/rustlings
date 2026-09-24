@@ -6,7 +6,7 @@ There are **112 cumulative missions** across ten chapters: **91 TODO implementat
 
 The active repair is at most 16 reference lines (median four). Longer functions remain visible as supplied context. Read their contract and the local state transition first; you do not need to recreate the entire displayed function.
 
-Press `h` for the first hint. Reveal a precise diagnostic region with `rustlings workshop hint MISSION 2`, then request level `3` only if needed: it shows the reference operations for that region. In this checkout, use `cargo run --locked -- workshop hint MISSION 2`. Each level is requested separately.
+Press `h` for the first hint. Reveal a precise diagnostic region with `rustlings workshop hint MISSION 2`, then request level `3` for boundary cases and a debugging strategy. Hints never print the reference implementation. In this checkout, use `cargo run --locked -- workshop hint MISSION 2`. Each level is requested separately.
 
 The reference is [`QuasarRay/rustlings@a650509c789d`](https://github.com/QuasarRay/rustlings/tree/a650509c789da1656f813392b16aa1fa043b7f3e), Rustlings 6.5.0. Finishing restores that version, including its existing behavior and limitations. This course does not silently upgrade its design.
 
@@ -49,7 +49,7 @@ The package's existing `rust-version = "1.88"` describes the host engine. `[pack
 
 A mission is cleared by compilation and regression evidence. There is no `completed = true` flag to edit. Like ordinary Rustlings, the course is an open learning environment, not a tamper-resistant exam: changing tests, the verifier, caches, or solution fixtures is outside the exercise contract.
 
-The `repair!` token wrapper transports a function into its original module and `impl`. The wrapper itself does not expand in the small exercise binary. The verifier inserts its contents at the recorded source range and Cargo compiles it with the original project dependencies. Compiler diagnostics therefore point into `target/workshop/engine/`; repair the corresponding mission file, not that generated copy. The header and source map identify the original function. This arrangement preserves the existing checker and exercise dependency manifest.
+The `repair!` token wrapper transports a function into its original module and `impl`. The wrapper itself does not expand in the small exercise binary. The verifier inserts its contents at the recorded source range and Cargo compiles it with the original project dependencies. Compiler diagnostics retain their original locations in `target/workshop/engine/`. The report also gives mapped `Editable location` coordinates in your mission. Use those coordinates for edits. See the troubleshooting guide to inspect saved backtraces at increasing depths. This arrangement preserves the existing checker and exercise dependency manifest.
 
 ## Campaign map
 
