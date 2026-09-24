@@ -174,13 +174,17 @@ fn reconcile(directory: &Path, files: &Files) -> Result<()> {
     visit(directory, directory, files)
 }
 
-fn environment_identity(root: &Path) -> Result<Vec<u8>> {
+fn tool(program: &str) -> Command {
+    let mut command = Command::new(program);
+    process::prepare_course_command(&mut command);
+    command
+}
+
+fn environment_inputs(root: &Path) -> Result<Files> {
     let mut inputs = Files::new();
     // Cargo launches adapters through rustup, while Rustlings also executes
     // them directly. Track the selected toolchain, not proxy bookkeeping.
-    let sysroot = Command::new("rustc")
-        .args(["--print", "sysroot"])
-        .output()?;
+    let sysroot = tool("rustc").args(["--print", "sysroot"]).output()?;
     if !sysroot.status.success() {
         return fail("Could not resolve the Rust toolchain sysroot");
     }
@@ -194,6 +198,9 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
     );
     for (key, value) in std::env::vars_os() {
         let name = key.to_string_lossy();
+        if name.eq_ignore_ascii_case("PATH") {
+            continue;
+        }
         // Trace presentation never changes the checked source or prerequisites.
         // Child checks always record full traces; the display depth is separate.
         // Proxy labels and Cargo home defaults are represented by the resolved
@@ -214,7 +221,6 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
         if name.starts_with("RUST")
             || name.starts_with("CARGO_")
             || [
-                "PATH",
                 "CC",
                 "CXX",
                 "AR",
@@ -237,6 +243,9 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
             }
             inputs.insert(format!("env:{name}"), format!("{value:?}"));
         }
+    }
+    if let Some(path) = process::tool_path() {
+        inputs.insert("env:PATH".into(), format!("{path:?}"));
     }
     let mut directories: Vec<_> = root
         .join("target/workshop/engine")
@@ -272,7 +281,13 @@ fn environment_identity(root: &Path) -> Result<Vec<u8>> {
             }
         }
     }
-    Ok(serialize(&inputs, "course-environment-v1"))
+    Ok(inputs)
+}
+fn environment_identity(root: &Path) -> Result<Vec<u8>> {
+    Ok(serialize(
+        &environment_inputs(root)?,
+        "course-environment-v1",
+    ))
 }
 // OS-owned lock lifetime survives neither normal exit nor interruption.
 // Keeping the file itself is harmless: the lock belongs to this open handle.
@@ -330,7 +345,7 @@ impl Workshop {
         identity.extend_from_slice(&fs::read(support.join("diagnostics.rs"))?);
         identity.extend_from_slice(&environment_identity(&root)?);
         for tool in ["rustc", "cargo"] {
-            let out = Command::new(tool)
+            let out = self::tool(tool)
                 .arg("--version")
                 .arg("--verbose")
                 .output()?;
@@ -544,7 +559,7 @@ impl Workshop {
             "warnings",
         ]);
         for args in commands {
-            let mut cmd = Command::new("cargo");
+            let mut cmd = tool("cargo");
             cmd.args(args)
                 .current_dir(&build)
                 .env("CARGO_TARGET_DIR", &target)
@@ -1169,6 +1184,9 @@ mod verifier_tests {
     fn trace_depth_preserves_receipts_but_rustflags_change_identity() {
         const CHILD: &str = "WORKSHOP_ENVIRONMENT_TEST_ROOT";
         if let Some(root) = std::env::var_os(CHILD) {
+            for (key, value) in environment_inputs(Path::new(&root)).unwrap() {
+                println!("ENVIRONMENT_FIELD={key}\t{}", digest(value.as_bytes()));
+            }
             println!(
                 "ENVIRONMENT_ID={}",
                 digest(&environment_identity(Path::new(&root)).unwrap())
@@ -1231,13 +1249,23 @@ fn main() {
             .args(["run", "--offline", "--quiet", "--manifest-path"])
             .arg(tmp.0.join("Cargo.toml"));
         let mut identities = Vec::new();
+        let mut fields = Vec::new();
         for cmd in [&mut direct, &mut cargo] {
+            process::prepare_course_command(cmd);
             cmd.env("WORKSHOP_ENVIRONMENT_TEST_ROOT", &tmp.0)
                 .env("WORKSHOP_TEST_EXE", std::env::current_exe().unwrap())
                 .env("CARGO_TARGET_DIR", tmp.0.join("target"));
             let (status, output) = process::capture(cmd, Duration::from_secs(60)).unwrap();
             let output = String::from_utf8(output).unwrap();
             assert!(status.success(), "{output}");
+            fields.push(
+                output
+                    .lines()
+                    .filter_map(|l| l.strip_prefix("ENVIRONMENT_FIELD="))
+                    .filter_map(|l| l.split_once('\t'))
+                    .map(|(k, v)| (k.to_owned(), v.to_owned()))
+                    .collect::<BTreeMap<_, _>>(),
+            );
             identities.push(
                 output
                     .lines()
@@ -1247,8 +1275,40 @@ fn main() {
             );
         }
         assert_eq!(
+            identities[0],
+            identities[1],
+            "Cargo's proxy environment must not relock a directly certified repair; differing input names: {:?}",
+            fields[0]
+                .keys()
+                .chain(fields[1].keys())
+                .filter(|k| fields[0].get(*k) != fields[1].get(*k))
+                .collect::<std::collections::BTreeSet<_>>()
+        );
+    }
+    #[test]
+    fn caller_tool_path_changes_still_invalidate_identity() {
+        let tmp = Scratch::new();
+        let original = process::tool_path().unwrap();
+        let changed =
+            std::env::join_paths(std::env::split_paths(&original).chain([tmp.0.clone()])).unwrap();
+        let mut identities = Vec::new();
+        for path in [original, changed] {
+            let (status, output) = process::capture(Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "verifier_tests::trace_depth_preserves_receipts_but_rustflags_change_identity", "--nocapture"])
+                .env("WORKSHOP_ENVIRONMENT_TEST_ROOT", &tmp.0).env("WORKSHOP_TOOL_PATH", path), Duration::from_secs(10)).unwrap();
+            let output = String::from_utf8(output).unwrap();
+            assert!(status.success(), "{output}");
+            identities.push(
+                output
+                    .lines()
+                    .find_map(|l| l.strip_prefix("ENVIRONMENT_ID="))
+                    .unwrap()
+                    .to_owned(),
+            );
+        }
+        assert_ne!(
             identities[0], identities[1],
-            "Cargo's proxy environment must not relock a directly certified repair"
+            "the caller's tool search path remains a semantic input"
         );
     }
     #[test]

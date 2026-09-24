@@ -28,6 +28,7 @@ pub fn entry() -> Result<Option<std::process::ExitCode>> {
         String::from_utf8_lossy(&output)
     );
     let mut cmd = Command::new(binary);
+    process::prepare_course_command(&mut cmd);
     cmd.args(std::env::args().skip(2));
     let status = cmd.status().context("Could not launch course driver")?;
     Ok(Some(std::process::ExitCode::from(
@@ -65,6 +66,7 @@ pub fn run_command(
     if std::env::var_os("CARGO_BUILD_JOBS").is_none() {
         cmd.env("CARGO_BUILD_JOBS", "2");
     }
+    process::prepare_course_command(&mut cmd);
     let (status, bytes) = process::capture(&mut cmd, Duration::from_secs(600))
         .with_context(|| format!("Course infrastructure could not run `{description}`"))?;
     if let Some(output) = output {
