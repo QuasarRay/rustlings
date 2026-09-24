@@ -253,9 +253,9 @@ fn environment_inputs(root: &Path) -> Result<Files> {
         .map(Path::to_path_buf)
         .collect();
     if let Some(home) = std::env::var_os("CARGO_HOME")
+        .filter(|p| !p.is_empty())
         .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|p| PathBuf::from(p).join(".cargo")))
-        .or_else(|| std::env::var_os("USERPROFILE").map(|p| PathBuf::from(p).join(".cargo")))
+        .or_else(|| std::env::home_dir().map(|p| p.join(".cargo")))
     {
         let home = home.canonicalize().unwrap_or(home);
         inputs.insert("cargo-home".into(), format!("{home:?}"));
@@ -1224,6 +1224,14 @@ mod verifier_tests {
     }
     #[test]
     fn cargo_and_direct_adapter_environments_share_identity() {
+        assert_cargo_and_direct_identity(false);
+    }
+    #[cfg(windows)]
+    #[test]
+    fn windows_default_cargo_home_ignores_unix_shell_home() {
+        assert_cargo_and_direct_identity(true);
+    }
+    fn assert_cargo_and_direct_identity(use_windows_default_home: bool) {
         let tmp = Scratch::new();
         write_changed(
             &tmp.0.join("Cargo.toml"),
@@ -1252,6 +1260,12 @@ fn main() {
         let mut fields = Vec::new();
         for cmd in [&mut direct, &mut cargo] {
             process::prepare_course_command(cmd);
+            if use_windows_default_home {
+                // Cargo uses USERPROFILE on Windows even if Git Bash supplies
+                // a different HOME. Model an installed binary's direct launch.
+                cmd.env_remove("CARGO_HOME")
+                    .env("HOME", tmp.0.join("shell-home"));
+            }
             cmd.env("WORKSHOP_ENVIRONMENT_TEST_ROOT", &tmp.0)
                 .env("WORKSHOP_TEST_EXE", std::env::current_exe().unwrap())
                 .env("CARGO_TARGET_DIR", tmp.0.join("target"));
