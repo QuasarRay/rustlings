@@ -429,7 +429,7 @@ impl Workshop {
         if let Some(report) = self.cached(&key, &input)? {
             return Ok(report);
         }
-        // One budget owns queueing, Clippy, and tests together. The course host
+        // One budget owns queueing, compilation, tests and Clippy together. The course host
         // grants 600 seconds, leaving 60 seconds for startup and cleanup.
         let deadline = Instant::now() + Duration::from_secs(540);
         let _lock = self.lock(deadline)?;
@@ -473,15 +473,9 @@ impl Workshop {
         }
         test_args.extend(["--", "--test-threads=1"]);
         let mut commands: Vec<&[&str]> = vec![
-            &[
-                "clippy",
-                "--locked",
-                "--workspace",
-                "--all-targets",
-                "--",
-                "-D",
-                "warnings",
-            ],
+            // Type errors belong to the repair. Lints about unused scaffold are
+            // useful only after the implementation satisfies its contracts.
+            &["check", "--locked", "--workspace", "--all-targets"],
             &[
                 "test",
                 "--locked",
@@ -507,6 +501,15 @@ impl Workshop {
                 "--test-threads=1",
             ]);
         }
+        commands.push(&[
+            "clippy",
+            "--locked",
+            "--workspace",
+            "--all-targets",
+            "--",
+            "-D",
+            "warnings",
+        ]);
         for args in commands {
             let mut cmd = Command::new("cargo");
             cmd.args(args)
@@ -756,7 +759,9 @@ impl Workshop {
                 if pass && filter.is_some() {
                     (pass, report) = self.evaluate(&files, true)?;
                 }
-                let ran_tests = report.contains("cargo test --locked");
+                // An identity test or a failed test compilation is not evidence
+                // that the behavioral fault was reached by a running test.
+                let ran_tests = report.contains("test result: FAILED");
                 let macro_execution =
                     m.file == "rustlings-macros/src/lib.rs" && report.contains(&marker);
                 let observed_fault = kind == "value" || report.contains(&marker);
@@ -912,6 +917,51 @@ mod verifier_tests {
         fn drop(&mut self) {
             let _ = fs::remove_dir_all(&self.0);
         }
+    }
+    fn diagnostic_fixture(tmp: &Scratch, source: &str) -> Workshop {
+        Workshop {
+            root: tmp.0.clone(),
+            cache: tmp.0.join("workshop"),
+            base: Files::from([
+                ("Cargo.toml".into(), "[package]\nname='rustlings'\nversion='0.0.0'\nedition='2024'\n[workspace]\nmembers=['rustlings-macros']\n".into()),
+                ("Cargo.lock".into(), "version = 4\n[[package]]\nname = 'rustlings'\nversion = '0.0.0'\n[[package]]\nname = 'rustlings-macros'\nversion = '0.0.0'\n".into()),
+                ("src/main.rs".into(), source.into()),
+                ("rustlings-macros/Cargo.toml".into(), "[package]\nname='rustlings-macros'\nversion='0.0.0'\nedition='2024'\n".into()),
+                ("rustlings-macros/src/lib.rs".into(), "".into()),
+            ]),
+            probes: Files::new(),
+            missions: Vec::new(),
+            identity: "diagnostic-fixture".into(),
+        }
+    }
+    #[test]
+    fn compiler_errors_and_contract_failures_precede_scaffold_lints() {
+        let tmp = Scratch::new();
+        fs::create_dir(tmp.0.join("workshop")).unwrap();
+        let workshop = diagnostic_fixture(
+            &tmp,
+            "fn wants_str(_: &str) {} fn main() { wants_str(String::new()); }\n",
+        );
+        let (pass, report) = workshop
+            .evaluate_filtered(&workshop.base, Some("contract"))
+            .unwrap();
+        assert!(!pass);
+        assert!(report.contains("error[E0308]"), "{report}");
+        assert!(report.contains("consider borrowing here"), "{report}");
+        assert!(!report.contains("cargo clippy"), "{report}");
+
+        let workshop = diagnostic_fixture(
+            &tmp,
+            "fn main() { let unrelated_lint = 1; }\n#[test] fn contract() { assert_eq!(2, 3, \"counter must advance once\"); }\n",
+        );
+        let (pass, report) = workshop
+            .evaluate_filtered(&workshop.base, Some("contract"))
+            .unwrap();
+        assert!(!pass);
+        assert!(report.contains("counter must advance once"), "{report}");
+        assert!(report.contains("left: 2"), "{report}");
+        assert!(report.contains("right: 3"), "{report}");
+        assert!(!report.contains("cargo clippy"), "{report}");
     }
     #[test]
     fn removes_untracked_build_inputs_and_preserves_expected_files() {

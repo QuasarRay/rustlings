@@ -88,6 +88,9 @@ pub fn run(mission: usize, source: &str) {
             }
             _ => "INFRA_ERROR: the verifier could not judge your repair; read the diagnostic above",
         };
-        panic!("{reason}");
+        // The child already emitted the real compiler/test diagnostic. A panic
+        // here would add a second, misleading backtrace into the course adapter.
+        eprintln!("{reason}");
+        std::process::exit(status.code().unwrap_or(2));
     }
 }

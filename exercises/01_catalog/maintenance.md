@@ -16,7 +16,7 @@ Reports under `target/workshop` distinguish three claims:
 | --- | --- |
 | `audit.txt` | All 112 isolated starters fail, all reference repairs pass, and all 266 archived files reconstruct exactly. A TODO lint failure alone establishes no behavioral coverage. |
 | `mutation-audit.tsv` | Mission, source file, fault kind, outcome, and executed test names. Every mission has a compiling runtime-fault check (or a changed constant); 19 also have wrong-value, boundary, predicate, or side-effect mutations. The procedural macro is observed at compile time. |
-| `mutation-NNN-KIND.log` | Commands and raw diagnostics for that individual mutation. `CAUGHT` requires a test failure after successful Clippy, or the expected procedural-macro panic. Runtime-fault evidence must contain that mission's marker. |
+| `mutation-NNN-KIND.log` | Commands and raw diagnostics for that individual mutation. `CAUGHT` requires a running behavioral test to fail after compilation, or the expected procedural-macro panic. Clippy runs after behavioral checks; a lint failure alone is not mutation evidence. Runtime-fault evidence must contain that mission's marker. |
 
 `ESCAPED`, `INVALID_MUTANT`, and `UNOBSERVED_FAILURE` fail the author gate. A module filter only saves work: a mutation that survives it is checked against the complete integration suite before being classified as escaped. Filtered results cannot certify a learner repair. These 131 mutations establish a minimum set of negative examples, not exhaustive semantic equivalence. Assertions in `probes.txt` cover values and transitions; live terminal/editor versions still need appropriate manual checks.
 
