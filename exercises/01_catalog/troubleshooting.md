@@ -4,7 +4,7 @@
 | --- | --- |
 | `LOCKED: complete or recheck ...` | An earlier source, verifier, or toolchain changed. Recheck the indicated mission and continue in order. |
 | Error in `target/workshop/engine/src/...` | This is the real reconstructed code. Fix the mapped function in the mission file. |
-| `todo!` or a missing binding | Implement the omitted operation; removing the marker without restoring behavior is insufficient. |
+| A missing binding or incompatible type | Complete the operation in the mapped repair region; use Rust's type and ownership explanation. |
 | Compilation succeeds but a test fails | Investigate state, boundaries, command arguments, and exit status. Read the named contract probe. |
 | `INFRA_TIMEOUT` or `INFRA_ERROR` | The verifier could not judge the repair. Check tool availability, network access for uncached dependencies, and machine load, then retry. Infrastructure failures never become cached rejections. |
 | Another course check owns the compiler lock | Wait for that check to finish and retry. The OS releases the lock automatically if its verifier exits; the lock file itself can remain. |
